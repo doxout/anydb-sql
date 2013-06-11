@@ -67,6 +67,18 @@ tx.commit();
 
 Transactions have the same API as anydb tranactions
 
+Finally you can close the connection pool
+
+```js
+db.close();
+```
+
+Or execute custom queries
+
+```js
+db.query(...anydb arguments...)
+```
+
 # licence
 
 MIT

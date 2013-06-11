@@ -1,0 +1,23 @@
+{
+  "name": "anydb-sql",
+  "version": "0.1.0",
+  "description": "anydb-sql combines node-anydb and node-sql",
+  "main": "anydb-sql.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/spion/anydb-sql.git"
+  },
+  "author": "spion",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "keywords": [
+    "anydb",
+    "sql"
+  ],
+  "bugs": {
+    "url": "https://github.com/spion/anydb-sql/issues"
+  }
+}
