@@ -9,6 +9,8 @@ module.exports = function (opt) {
 
     var dialect = url.parse(opt.url).protocol;
     dialect = dialect.substr(0, dialect.length - 1);
+    if (dialect == 'sqlite3') 
+      dialect = 'sqlite';
     sql.setDialect(dialect);
 
     var self = {};
@@ -16,7 +18,6 @@ module.exports = function (opt) {
 
     function extendedTable(table) {
         var extTable = Object.create(table); // inherit everything from a regular table.
-
 
         // make query methods return extended queries.
         ['select', 'from', 'insert', 'update',
@@ -42,12 +43,11 @@ module.exports = function (opt) {
 
         extQuery.execWithin = function (where, fn) {
             var query = self.toQuery(); // {text, params}
-
             if (!fn)
                 return where.query(query.text, query.values);
             else
                 return where.query(query.text, query.values, function (err, res) {
-                    fn && fn(err, res ? res.rows : null);
+                    fn(err, res ? res.rows : null);
                 });
         };
 

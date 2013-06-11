@@ -1,10 +1,10 @@
 {
   "name": "anydb-sql",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "anydb-sql combines node-anydb and node-sql",
   "main": "anydb-sql.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "tap test/index.js"
   },
   "repository": {
     "type": "git",
@@ -19,5 +19,17 @@
   ],
   "bugs": {
     "url": "https://github.com/spion/anydb-sql/issues"
+  },
+  "gitHead": "c4b3c68facd77fb5f9c3987f5dee8767065794f7",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {
+    "sql": "~0.22.0",
+    "any-db": "~0.5.1"
+  },
+  "devDependencies": {
+    "tap": "~0.4.3",
+    "sqlite3": "~2.1.7"
   }
 }
