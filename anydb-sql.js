@@ -1,17 +1,30 @@
 var anyDB = require('any-db');
+
+
 var sql = require('sql');
 var url = require('url');
 
 
 module.exports = function (opt) {
 
-    var pool = anyDB.createPool(opt.url, opt.connections);
 
     var dialect = url.parse(opt.url).protocol;
     dialect = dialect.substr(0, dialect.length - 1);
     if (dialect == 'sqlite3') 
       dialect = 'sqlite';
     sql.setDialect(dialect);
+    
+    if (dialect == 'sqlite') {
+        try {
+            var sqlitepool = require('./sqlite-pool');
+            var pool = sqlitepool(opt.url, opt.connections);
+        } catch (e) {
+            throw new Error("Unable to load sqlite pool: " + e.message);
+        }
+    }
+    else {
+        var pool = anyDB.createPool(opt.url, opt.connections);
+    }
 
     var self = {};
 

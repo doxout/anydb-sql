@@ -30,6 +30,6 @@
   },
   "devDependencies": {
     "tap": "~0.4.3",
-    "sqlite3": "~2.1.7"
+    "sqlite3": "~2.1.10"
   }
 }

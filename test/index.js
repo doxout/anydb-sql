@@ -18,7 +18,6 @@ var user = db.define({
 test('anydb-sql', function(t) {
 
   db.query('create table users (id integer primary key, name text);', function(err) {
-
     t.notOk(err, 'creating table failed: ' + err);
 
     t.test('insert exec', function(t) {
