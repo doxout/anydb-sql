@@ -4,6 +4,9 @@ var anyDB = require('any-db');
 var sql = require('sql');
 var url = require('url');
 
+var queryMethods = ['select', 'from', 'insert', 'update',
+    'delete', 'create', 'drop', 'alter', 'where',
+    'indexes'];
 
 module.exports = function (opt) {
 
@@ -30,11 +33,11 @@ module.exports = function (opt) {
 
 
     function extendedTable(table) {
-        var extTable = Object.create(table); // inherit everything from a regular table.
+        // inherit everything from a regular table.
+        var extTable = Object.create(table); 
 
         // make query methods return extended queries.
-        ['select', 'from', 'insert', 'update',
-            'delete', 'create', 'drop', 'alter', 'where'].forEach(function (key) {
+        queryMethods.forEach(function (key) {
                 extTable[key] = function () {
                     return extendedQuery(table[key].apply(table, arguments));
                 }
@@ -51,8 +54,9 @@ module.exports = function (opt) {
 
     function extendedQuery(query) {
         var extQuery = Object.create(query);
-
         var self = extQuery;
+
+        self.__extQuery = true;
 
         extQuery.execWithin = function (where, fn) {
             var query = self.toQuery(); // {text, params}
@@ -74,6 +78,13 @@ module.exports = function (opt) {
             })
         };
 
+        queryMethods.forEach(function (key) {
+            extQuery[key] = function () {
+                var q = query[key].apply(query, arguments);
+                if (q.__extQuery) return q;
+                return extendedQuery(q);
+            }
+        });
 
         return extQuery;
     }
