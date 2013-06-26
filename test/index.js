@@ -15,6 +15,7 @@ var user = db.define({
   columns: ['id', 'name']
 });
 
+
 test('anydb-sql', function(t) {
 
   db.query('create table users (id integer primary key, name text);', function(err) {

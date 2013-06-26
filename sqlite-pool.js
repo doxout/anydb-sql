@@ -4,7 +4,8 @@ sqlite = require('sqlite3');
 
 module.exports = function createSQLitePool(dbpath, conns) {
     var parsed = url.parse(dbpath);
-    if (parsed.hostname && parsed.path)
+    console.log(parsed);
+    if (parsed.path)
         var dbfile = path.join(parsed.hostname, parsed.path);
     else
         var dbfile = ':memory:';
