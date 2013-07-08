@@ -4,6 +4,8 @@ var anyDB = require('any-db');
 var sql = require('sql');
 var url = require('url');
 
+var EventEmitter = require('events').EventEmitter;
+
 var queryMethods = ['select', 'from', 'insert', 'update',
     'delete', 'create', 'drop', 'alter', 'where',
     'indexes'];
@@ -48,6 +50,7 @@ var queryMethods = ['select', 'from', 'insert', 'update',
             extTable.as = function () {
                 return extendedTable(table.as.apply(table, arguments));
             };
+            extTable.eventEmitter = new EventEmitter();
             return extTable;
         }
 
