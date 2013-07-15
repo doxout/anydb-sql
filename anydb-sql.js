@@ -102,6 +102,17 @@ var queryMethods = ['select', 'from', 'insert', 'update',
         self.begin = pool.begin.bind(pool);
         self.query = pool.query.bind(pool);
 
+
+        self.allOf = function() {
+            var tables = [].slice.call(arguments);
+            return tables.reduce(function (all, table) {
+                var tableName = table.alias || table._name;
+                return all.concat(table.columns.map(function(c) {
+                    return c.as(tableName + '.' + c.name);
+                }));
+            }, []);
+        };
+
         return self;
 
     };

@@ -75,7 +75,16 @@ test('anydb-sql', function(t) {
         t.equals(res.id,  1, 'user.id is 1');    
         t.end();
       });
-    })
+    });
+
+    t.test('allof', function(t) {
+        var q = user.select(db.allOf(user, user));
+        var text = 'SELECT "users"."id" AS "users.id",'
+            + ' "users"."name" AS "users.name", "users"."id" AS "users.id",'
+            +' "users"."name" AS "users.name" FROM "users"';
+        t.equals(q.toQuery().text, text);
+        t.end();
+    });
 
     t.test('db.close', function(t) {
       t.plan(1);
