@@ -52,7 +52,7 @@ user.select(user.name, post.content)
   .where(post.date.gt(yesterday))
   .where(user.id.equals(id))
   .get(function(err, res) {
-    // res['user.name'] and res['post.content']
+    // res['name'] and res['content']
   });
 ```
 
@@ -66,6 +66,37 @@ tx.commit();
 ```
 
 Transactions have the same API as anydb tranactions
+
+In join queries you can create sub-objects in the result by specifying aliases
+that contain dots in the name:
+
+```js
+user.select(user.name.as('user.name'), post.content.as('post.content'))
+  .from(user.join(post).on(user.id.equals(post.userId)))
+  .where(post.date.gt(yesterday))
+  .where(user.id.equals(id))
+  .get(function(err, res) {
+    // res.user.name and res.post.content
+  });
+```
+
+
+Or you can use db.allOf to select all columns and get them in sub-objects:
+
+```js
+user.select(db.allOf(user, post))
+  .from(user.join(post).on(user.id.equals(post.userId)))
+  .where(post.date.gt(yesterday))
+  .where(user.id.equals(id))
+  .get(function(err, res) {
+    // contains res.user.name, res.post.content and all
+    // other columns from both tables in two subobjects
+    // per row.
+  });
+```
+
+
+
 
 Finally you can close the connection pool
 
