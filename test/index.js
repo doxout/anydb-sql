@@ -16,6 +16,19 @@ var user = db.define({
 });
 
 
+test('normalizer', function(t) {
+    var n = anydbsql.normalizer;
+    t.test('normalizes well', function(t) {
+        var normalized = n({'a.b':1, 'a.c': 2, b: 3, 'c.a': 1, 'c.b': 2});
+        t.deepEquals(normalized, {
+            a: {b: 1, c: 2},
+            b: 3,
+            c: {a: 1, b: 2}
+        });
+        t.end();
+    });
+});
+
 test('anydb-sql', function(t) {
 
   db.query('create table users (id integer primary key, name text);', function(err) {
@@ -68,10 +81,10 @@ test('anydb-sql', function(t) {
       var query = user.from(user.join(userx).on(user.id.equals(userx.id)))
         .where(userx.id.equals(1))
         .select(userx.id);
-      console.log(query.toQuery())
+      //console.log(query.toQuery())
 
       query.get(function(err, res) {
-        console.log(err, res);
+        //console.log(err, res);
         t.equals(res.id,  1, 'user.id is 1');    
         t.end();
       });
