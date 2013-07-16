@@ -20,20 +20,27 @@ module.exports = function (opt) {
         dialect = 'sqlite';
     sql.setDialect(dialect);
 
-    if (dialect == 'sqlite') {
-        try {
-            var sqlitepool = require('./sqlite-pool');
-            var pool = sqlitepool(opt.url, opt.connections);
-        } catch (e) {
-            throw new Error("Unable to load sqlite pool: " + e.message);
-        }
-    }
-    else {
-        var pool = anyDB.createPool(opt.url, opt.connections);
-    }
+    var pool;
 
     var self = {};
 
+    self.open = function() {
+        if (pool) 
+            return; // already open
+        if (dialect == 'sqlite') {
+            try {
+                var sqlitepool = require('./sqlite-pool');
+                pool = sqlitepool(opt.url, opt.connections);
+            } catch (e) {
+                throw new Error("Unable to load sqlite pool: " + e.message);
+            }
+        }
+        else {
+            pool = anyDB.createPool(opt.url, opt.connections);
+        }
+    }
+
+    self.open();
 
     function extendedTable(table) {
         // inherit everything from a regular table.
@@ -101,7 +108,12 @@ module.exports = function (opt) {
     };
 
 
-    self.close = pool.close.bind(pool);
+    self.close = function() {
+        if (pool) 
+            pool.close.apply(pool, arguments);
+        pool = null;
+    };
+
     self.begin = pool.begin.bind(pool);
     self.query = pool.query.bind(pool);
 
