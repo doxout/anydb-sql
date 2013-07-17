@@ -42,6 +42,8 @@ module.exports = function (opt) {
 
     self.open();
 
+    self.models = {};
+
     function extendedTable(table) {
         // inherit everything from a regular table.
         var extTable = Object.create(table); 
@@ -103,8 +105,10 @@ module.exports = function (opt) {
     }
 
 
-    self.define = function () {
-        return extendedTable(sql.define.apply(sql, arguments));
+    self.define = function (opt) {
+        var t = extendedTable(sql.define.apply(sql, arguments));
+        self.models[opt.name] = t;
+        return t;
     };
 
 
@@ -127,6 +131,7 @@ module.exports = function (opt) {
             }));
         }, []);
     };
+
 
     return self;
 
