@@ -1,12 +1,13 @@
 # anydb-sql
 
 anydb-sql combines [node-anydb](https://github.com/grncdr/node-any-db)
-and [node-sql](https://github.com/brianc/node-sql) into a single package.
+and [node-sql](https://github.com/brianc/node-sql) into a single package full 
+of awesomeness.
 
 # examples and usage:
 
-Initializing an instance also creates a connection pool. The url argument 
-is the same as in node-anydb
+Initializing an instance also creates a connection pool. The url argument is 
+the same as in node-anydb
 
 ```js
 var anydbsql = require('anydb-sql');
@@ -26,35 +27,68 @@ var user = db.define({
 });
 ```
 
-Queries have the addtional methods:
+## extra methods
+
+Queries have all the methods as in node-sql, plus the addtional methods:
+
 * exec(function(err, rows)) - executes the query and calls the callback 
   with an array of rows
-* get(function(err, row)) - executes the query and returns the first result
 * all - same as exec
+* get(function(err, row)) - executes the query and returns the first result
 * execWithin(transaction, function(err, rows)) - execute within a transaction
 
+If you omit the callback from the additional methods, an eventemitter will be 
+returned instead (like in anydb).
 
-Use regular node-sql queries then chain one of the additional
-methods at the end:
+Use regular node-sql queries then chain one of the additional methods at the 
+end:
 
 ```js
-user.where({email: user.email}).get(function(err, users) {
-  // users[0].name, 
+user.where({email: user.email}).get(function(err, user) {
+  // user.name, 
 });
 ```
 
-Join queries have somewhat different results at the moment.
-The format of the result is the same as with anydb
+## joins and subobjects
+
+Join queries can be constructed using node-sql. The format of the results is 
+the same as with anydb
 
 ```js
 user.select(user.name, post.content)
   .from(user.join(post).on(user.id.equals(post.userId)))
   .where(post.date.gt(yesterday))
-  .where(user.id.equals(id))
-  .get(function(err, res) {
-    // res['name'] and res['content']
+  .all(function(err, userposts) {
+    // res[0].name and res[0].content
   });
 ```
+
+When creating join queries, you can generate sub-objects in the result by 
+specifying aliases that contain dots in the name:
+
+```js
+user.select(user.name.as('user.name'), post.content.as('post.content'))
+  .from(user.join(post).on(user.id.equals(post.userId)))
+  .where(post.date.gt(yesterday))
+  .all(function(err, res) {
+    // res[0].user.name and res[0].post.content
+  });
+```
+
+
+or you can use db.allOf to do the above for all the table's columns :
+
+```js
+user.select(db.allOf(user, post))
+  .from(user.join(post).on(user.id.equals(post.userId)))
+  .where(post.date.gt(yesterday))
+  .all(function(err, res) {
+    // contains res[0].user.name, res[0].post.content and all
+    // other columns from both tables in two subobjects per row.
+  });
+```
+
+## transactions
 
 Create a transactions and execute queries within it
 
@@ -67,38 +101,9 @@ tx.commit();
 
 Transactions have the same API as anydb tranactions
 
-In join queries you can create sub-objects in the result by specifying aliases
-that contain dots in the name:
+# db.close and custom queries
 
-```js
-user.select(user.name.as('user.name'), post.content.as('post.content'))
-  .from(user.join(post).on(user.id.equals(post.userId)))
-  .where(post.date.gt(yesterday))
-  .where(user.id.equals(id))
-  .get(function(err, res) {
-    // res.user.name and res.post.content
-  });
-```
-
-
-Or you can use db.allOf to select all columns and get them in sub-objects:
-
-```js
-user.select(db.allOf(user, post))
-  .from(user.join(post).on(user.id.equals(post.userId)))
-  .where(post.date.gt(yesterday))
-  .where(user.id.equals(id))
-  .get(function(err, res) {
-    // contains res.user.name, res.post.content and all
-    // other columns from both tables in two subobjects
-    // per row.
-  });
-```
-
-
-
-
-Finally you can close the connection pool
+You can close the connection pool
 
 ```js
 db.close();
@@ -113,6 +118,4 @@ db.query(...anydb arguments...)
 # licence
 
 MIT
-
-
 
