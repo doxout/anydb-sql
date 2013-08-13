@@ -35,7 +35,7 @@ Queries have all the methods as in node-sql, plus the additional methods:
   with an array of rows
 * all - same as exec
 * get(function(err, row)) - executes the query and returns the first result
-* getMap(keyColumn, mapper, function(err, map), filter) - executes the query and maps the result to an object
+* allObject(keyColumn, function(err, map), [mapper, filter]) - executes the query and maps the result to an object
 * execWithin(transaction, function(err, rows)) - execute within a transaction
 
 If you omit the callback from the additional methods, an eventemitter will be 

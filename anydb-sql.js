@@ -99,32 +99,57 @@ module.exports = function (opt) {
         };
 
         /**
-         * Returns a map result from a query.
+         * Returns a result from a query, mapping it to an object by a specified key.
          * @param {!String} keyColumn the column to use as a key for the map.
-         * @param {!String|Array|Function} mapper can be:<ul>
+         * @param {!Function} callback called when the operation ends. Takes an error and the result.
+         * @param {String|Array|Function=} mapper can be:<ul>
          *     <li>the name of the column to use as a value;</li>
          *     <li>an array of column names. The value will be an object with the property names from this array mapped to the
          *         column values from the array;</li>
          *     <li>a function that takes the row as an argument and returns a value.</li>
-         * @param {!Function} callback called when the operation ends. Takes an error and the result.
+         *  </ul>
+         *                                        If omitted, assumes all other columns are values. If there is only one
+         *                                        other column, its value will be used for the object. Otherwise, the
+         *                                        value will be an object with the values mapped to column names.
          * @param {Function=} filter takes a row and returns a value indicating whether the row should be inserted in the
          *                           result.
          */
-        extQuery.getMap = function(keyColumn, mapper, callback, filter) {
+        extQuery.allObject = function(keyColumn, callback, mapper, filter) {
             filter = filter || function() { return true; };
 
-            if (typeof mapper === 'string') mapper = function(row) { return row[mapper]; };
-            else if (typeof mapper === 'object') mapper = function(row) {
-                var obj = {};
-                for (var j = 0; j < mapper.length; j++) obj[mapper[j]] = row[mapper[j]];
-                result[row[keyColumn]] = obj;
+            if (mapper) {
+                if (typeof mapper === 'string') {
+                    var str = mapper;
+                    mapper = function(row) { return row[str]; };
+                } else if (typeof mapper === 'object') {
+                    var arr = mapper;
+                    mapper = function(row) {
+                        var obj = {};
+                        for (var j = 0; j < arr.length; j++) obj[arr[j]] = row[arr[j]];
+                        return obj;
+                    };
+                }
+            } else mapper = function(row) {
+                var validKeys = Object.keys(row).filter(function(key) { return key != keyColumn; });
+
+                if (validKeys.length == 0) return null;
+                else if (validKeys.length == 1) return row[validKeys[0]];
+                else {
+                    var obj = {};
+                    for (var j = 0; j < validKeys.length; j++) obj[validKeys[j]] = row[validKeys[j]];
+                    return obj;
+                }
             };
 
             return this.exec(function(err, data) {
                 if (err) return callback(err);
 
                 var result = {};
-                for (var i = 0; i < data.length; i++) if (filter(data[i])) result[data[i][keyColumn]] = mapper(data[i]);
+                for (var i = 0; i < data.length; i++) {
+                    if (filter(data[i])) {
+                        result[data[i][keyColumn]] = mapper(data[i]);
+                    }
+                }
 
                 callback(null, result);
             });

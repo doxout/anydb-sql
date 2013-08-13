@@ -99,6 +99,21 @@ test('anydb-sql', function(t) {
         t.end();
     });
 
+    t.test('allObject', function(t) {
+        user.select(user.id, user.name).allObject("id", function(err, result) {
+            t.notOk(err, "has no error " + err);
+
+            user.select(user.id, user.name).exec(function(err, data) {
+                t.equals(Object.keys(result).length, data.length, "Amount of entries should match");
+
+                for (var i = 0; i < data.length; i++)
+                    t.equals(data[i].name, result[data[i].id], "Data should match");
+
+                t.end();
+            });
+        });
+    });
+
     t.test('db.close', function(t) {
       t.plan(1);
       db.close(function(err) {
