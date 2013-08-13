@@ -8,7 +8,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/spion/anydb-sql.git"
+    "url": "git://github.com/doxout/anydb-sql.git"
   },
   "author": "spion",
   "license": "MIT",
@@ -18,9 +18,8 @@
     "sql"
   ],
   "bugs": {
-    "url": "https://github.com/spion/anydb-sql/issues"
+    "url": "https://github.com/doxout/anydb-sql/issues"
   },
-  "gitHead": "c4b3c68facd77fb5f9c3987f5dee8767065794f7",
   "directories": {
     "test": "test"
   },
