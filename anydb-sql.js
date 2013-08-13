@@ -98,6 +98,38 @@ module.exports = function (opt) {
             })
         };
 
+        /**
+         * Returns a map result from a query.
+         * @param {!String} keyColumn the column to use as a key for the map.
+         * @param {!String|Array|Function} mapper can be:<ul>
+         *     <li>the name of the column to use as a value;</li>
+         *     <li>an array of column names. The value will be an object with the property names from this array mapped to the
+         *         column values from the array;</li>
+         *     <li>a function that takes the row as an argument and returns a value.</li>
+         * @param {!Function} callback called when the operation ends. Takes an error and the result.
+         * @param {Function=} filter takes a row and returns a value indicating whether the row should be inserted in the
+         *                           result.
+         */
+        extQuery.getMap = function(keyColumn, mapper, callback, filter) {
+            filter = filter || function() { return true; };
+
+            if (typeof mapper === 'string') mapper = function(row) { return row[mapper]; };
+            else if (typeof mapper === 'object') mapper = function(row) {
+                var obj = {};
+                for (var j = 0; j < mapper.length; j++) obj[mapper[j]] = row[mapper[j]];
+                result[row[keyColumn]] = obj;
+            };
+
+            return this.exec(function(err, data) {
+                if (err) return callback(err);
+
+                var result = {};
+                for (var i = 0; i < data.length; i++) if (filter(data[i])) result[data[i][keyColumn]] = mapper(data[i]);
+
+                callback(null, result);
+            });
+        };
+
         queryMethods.forEach(function (key) {
             extQuery[key] = function () {
                 var q = query[key].apply(query, arguments);
