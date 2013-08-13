@@ -1,6 +1,6 @@
 {
   "name": "anydb-sql",
-  "version": "0.1.12",
+  "version": "0.1.13",
   "description": "anydb-sql combines node-anydb and node-sql",
   "main": "anydb-sql.js",
   "scripts": {
