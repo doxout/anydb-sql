@@ -24,8 +24,8 @@
     "test": "test"
   },
   "dependencies": {
-    "sql": "~0.22.0",
-    "any-db": "~0.5.1"
+    "sql": "~0.26.0",
+    "any-db": "~0.6.0"
   },
   "devDependencies": {
     "tap": "~0.4.3",

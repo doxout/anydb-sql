@@ -25,8 +25,7 @@ module.exports = function (opt) {
     var self = {};
 
     self.open = function() {
-        if (pool) 
-            return; // already open
+        if (pool) return; // already open        
         if (dialect == 'sqlite') {
             try {
                 var sqlitepool = require('./sqlite-pool');
