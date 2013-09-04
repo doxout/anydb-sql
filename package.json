@@ -1,7 +1,7 @@
 {
   "name": "anydb-sql",
-  "version": "0.1.13",
-  "description": "anydb-sql combines node-anydb and node-sql",
+  "version": "0.1.11",
+  "description": "anydb-sql combines node-anydb and node-sql into a single package full of awesomeness.",
   "main": "anydb-sql.js",
   "scripts": {
     "test": "tap test/index.js"
