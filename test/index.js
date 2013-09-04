@@ -2,37 +2,53 @@ var test = require('tap').test;
 
 var anydbsql = require('../anydb-sql');
 
+var grouper = require('../grouper');
+
 var path = require('path');
 
+var util = require('util');
 
 var db = anydbsql({
   url: 'sqlite3://', 
   connections: 1
 });
 
+var post = db.define({
+    name: 'posts',
+    columns: {
+        'id': {primaryKey: true}, 
+        'title':{}, 
+        'content':{}, 
+        'userId': {}
+    },
+    has: {'user': {from: 'users'}}
+});
+
 var user = db.define({
   name: 'users',
-  columns: ['id', 'name']
+  columns: {
+      id: { primaryKey: true }, 
+      name:{}
+  },
+  has: {posts: {from: 'posts', many: true}}
 });
 
-
-test('normalizer', function(t) {
-    var n = anydbsql.normalizer;
-    t.test('normalizes well', function(t) {
-        var normalized = n({'a.b':1, 'a.c': 2, b: 3, 'c.a': 1, 'c.b': 2});
-        t.deepEquals(normalized, {
-            a: {b: 1, c: 2},
-            b: 3,
-            c: {a: 1, b: 2}
-        });
-        t.end();
-    });
-});
 
 test('anydb-sql', function(t) {
 
-  db.query('create table users (id integer primary key, name text);', function(err) {
+  db.query('create table users (id integer primary key, name);\n'
+          +'create table posts (id integer primary key, title, content, userId);', function(err) {
+    
     t.notOk(err, 'creating table failed: ' + err);
+
+    t.test('hasMany columns', function(t) {
+        //console.log(user.posts.id);
+        var q = user.from(
+            user.join(user.posts).on(user.id.equals(user.posts.userId)));
+        q = q.selectDeep(user.id, user.posts, user.posts.user, user.posts.user.posts);
+        console.log(q.toQuery().text);
+        t.end();
+    });
 
     t.test('insert exec', function(t) {
       user.insert({id: 1, name: 'test'}).exec(function(err, res) {
@@ -61,7 +77,7 @@ test('anydb-sql', function(t) {
 
     t.test('incorrect query', function(t) {
       user.insert({id: 4, name: 'lol'}).returning(user.id).exec(function(err, results) {
-        t.ok(err, 'incorrect query');
+        t.ok(err, 'should be an incorrect query: ' + err);
         t.notOk(results, 'should return null results: ' + results)
         t.end();
       });
@@ -92,8 +108,8 @@ test('anydb-sql', function(t) {
 
     t.test('allof', function(t) {
         var q = user.select(db.allOf(user, user));
-        var text = 'SELECT "users"."id" AS "users.id",'
-            + ' "users"."name" AS "users.name", "users"."id" AS "users.id",'
+        var text = 'SELECT "users"."id" AS "users.id##",'
+            + ' "users"."name" AS "users.name", "users"."id" AS "users.id##",'
             +' "users"."name" AS "users.name" FROM "users"';
         t.equals(q.toQuery().text, text);
         t.end();

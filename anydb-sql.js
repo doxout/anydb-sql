@@ -3,6 +3,9 @@ var anyDB = require('any-db');
 
 var sql = require('sql');
 var url = require('url');
+var _   = require('lodash');
+
+var grouper = require('./grouper');
 
 var EventEmitter = require('events').EventEmitter;
 
@@ -10,21 +13,23 @@ var queryMethods = ['select', 'from', 'insert', 'update',
     'delete', 'create', 'drop', 'alter', 'where',
     'indexes'];
 
-
-module.exports = function (opt) {
-
-
-    var dialect = url.parse(opt.url).protocol;
+function extractDialect(adr) {
+    var dialect = url.parse(adr).protocol;
     dialect = dialect.substr(0, dialect.length - 1);
     if (dialect == 'sqlite3') 
         dialect = 'sqlite';
+    return dialect;
+}
+
+module.exports = function (opt) {
+
+    var pool, 
+        db = {},
+        dialect = extractDialect(opt.url);
+
     sql.setDialect(dialect);
 
-    var pool;
-
-    var self = {};
-
-    self.open = function() {
+    db.open = function() {
         if (pool) return; // already open        
         if (dialect == 'sqlite') {
             try {
@@ -39,11 +44,11 @@ module.exports = function (opt) {
         }
     }
 
-    self.open();
+    db.open();
 
-    self.models = {};
+    db.models = {};
 
-    function extendedTable(table) {
+    function extendedTable(table, opt) {
         // inherit everything from a regular table.
         var extTable = Object.create(table); 
 
@@ -57,10 +62,34 @@ module.exports = function (opt) {
 
         // make as return extended tables.
         extTable.as = function () {
-            return extendedTable(table.as.apply(table, arguments));
+            return extendedTable(table.as.apply(table, arguments), opt);
         };
         extTable.eventEmitter = new EventEmitter();
+
+        if (opt.has) defineProperties(extTable, opt.has);
         return extTable;
+    }
+
+
+    function defineProperties(owner, has) {
+        Object.keys(has).forEach(function(name) {
+            var what = has[name],
+                table = what.from,
+                many = what.many ? '[]' : '',
+                foreign;
+            Object.defineProperty(owner, name, { 
+                get: function() {                                  
+                    if (!foreign)
+                        if (typeof(table) == 'string')
+                            foreign = db.models[table];
+                        else
+                            foreign = table;
+                    var ownerName = owner.alias || owner._name;
+                    return foreign.as(ownerName + '.' + name + many);
+
+                } 
+            });
+        });
     }
 
 
@@ -80,10 +109,11 @@ module.exports = function (opt) {
                 return where.query(query.text, query.values, function (err, res) {
                     if (err) {
                         err = new Error(err);
-                        err.message = 'SQL' + err.message + '\n' + query.text 
-                        + '\n' + query.values;
+                        err.message = err.message.substr('Error  '.length) 
+                        + ' in query `' + query.text 
+                        + '` with params ' + JSON.stringify(query.values);
                     }
-                    fn(err, res && res.rows ? res.rows.map(normalizer) : null);
+                    fn(err, res && res.rows ? res.rows.map(grouper.normalize) : null);
                 });
         };
 
@@ -92,7 +122,7 @@ module.exports = function (opt) {
         extQuery.all = extQuery.exec;
 
         extQuery.get = function (fn) {
-            return this.exec(function (err, rows) {
+            return self.exec(function (err, rows) {
                 return fn(err, rows && rows.length ? rows[0] : null);
             })
         };
@@ -124,23 +154,27 @@ module.exports = function (opt) {
                     var arr = mapper;
                     mapper = function(row) {
                         var obj = {};
-                        for (var j = 0; j < arr.length; j++) obj[arr[j]] = row[arr[j]];
+                        for (var j = 0; j < arr.length; j++) 
+                            obj[arr[j]] = row[arr[j]];
                         return obj;
                     };
                 }
             } else mapper = function(row) {
-                var validKeys = Object.keys(row).filter(function(key) { return key != keyColumn; });
+                var validKeys = Object.keys(row).filter(function(key) { 
+                    return key != keyColumn; 
+                });
 
-                if (validKeys.length == 0) return null;
+                if (validKeys.length === 0) return null;
                 else if (validKeys.length == 1) return row[validKeys[0]];
                 else {
                     var obj = {};
-                    for (var j = 0; j < validKeys.length; j++) obj[validKeys[j]] = row[validKeys[j]];
+                    for (var j = 0; j < validKeys.length; j++) 
+                        obj[validKeys[j]] = row[validKeys[j]];
                     return obj;
                 }
             };
 
-            return this.exec(function(err, data) {
+            return self.exec(function(err, data) {
                 if (err) return callback(err);
 
                 var result = {};
@@ -153,7 +187,7 @@ module.exports = function (opt) {
                 callback(null, result);
             });
         };
-
+        
         queryMethods.forEach(function (key) {
             extQuery[key] = function () {
                 var q = query[key].apply(query, arguments);
@@ -162,55 +196,58 @@ module.exports = function (opt) {
             }
         });
 
+        extQuery.selectDeep = function() {
+            return extQuery.select(db.allOf.apply(db, arguments));
+        };
+
+
+
         return extQuery;
     }
 
 
-    self.define = function (opt) {
-        var t = extendedTable(sql.define.apply(sql, arguments));
-        self.models[opt.name] = t;
+    db.define = function (opt) {
+        var t = extendedTable(sql.define.apply(sql, arguments), opt);
+        db.models[opt.name] = t;
         return t;
     };
 
 
-    self.close = function() {
+    db.close = function() {
         if (pool) 
             pool.close.apply(pool, arguments);
         pool = null;
     };
 
-    self.begin = pool.begin.bind(pool);
-    self.query = pool.query.bind(pool);
+    db.begin = pool.begin.bind(pool);
+    db.query = pool.query.bind(pool);
 
 
-    self.allOf = function() {
+    function columnName(c) {
+        var name = c.alias || c.name;
+        if (c.primaryKey) 
+            name = name + '##';
+        return name;
+    }
+
+    db.allOf = function() {
         var tables = [].slice.call(arguments);
         return tables.reduce(function (all, table) {
             var tableName = table.alias || table._name;
-            return all.concat(table.columns.map(function(c) {
-                return c.as(tableName + '.' + c.name);
-            }));
+            if (table.columns) 
+                return all.concat(table.columns.map(function(c) {
+                    return c.as(tableName + '.' + columnName(c));
+                }));
+            else if (table.aggregate) {
+                var column = table;
+                tableName = column.table.alias || column.table._name;
+                return all.concat([column.as(tableName + '.' 
+                                             + columnName(column))]);
+            }
         }, []);
     };
 
-
-    return self;
+    return db;
 
 };
-
-var normalizer = module.exports.normalizer = function normalizer(row) {
-    var res = {};
-    for (var key in row) {
-        var path = key.split('.'), plen = path.length;
-        for (var k = 0, obj = res; k < plen - 1; ++k) {
-            var item = path[k];
-            if (!obj[item]) obj[item] = {};
-            obj = obj[item];
-        }
-        var item = path[plen - 1];
-        obj[item] = row[key];
-    }
-    return res;
-}
-
 
