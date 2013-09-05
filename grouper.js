@@ -1,6 +1,5 @@
 var _ = require('lodash');
 
-
 function isObject(o) { 
     if (typeof(o) == 'string')
         return false;
@@ -16,7 +15,6 @@ function hasNumberOfProperties(o, n) {
         if (++k > n) return false;
     return k == n; 
 }
-
 
 function normalize(row) {
     var res = {}, item;
@@ -39,6 +37,8 @@ function stringKey(object, exclude, include) {
         var item = object[key]
 
         if (include && include(item, key)) {
+            if (typeof(item) === 'string')
+                str += '"';
             str += item + '~#~'
             found = true;
         }
@@ -163,10 +163,23 @@ function isKey(val, key) {
 var cleanRegex = /(\[\]|##)$/;
 
 
+function checkKeys(row, reg) {
+    for (var key in row) 
+        if (reg.test(key))
+            return true;
+    return false;
+}
+
 function process(rows) {
-    var normalized = removeDepth(rows.map(normalize));
-    var grouped = group(normalized, isGroup, isKey);
-    return clean(grouped, cleanRegex);
+    if (rows.length === 0) return rows;
+    if (!checkKeys(rows[0], /\./)) return rows;
+
+    var processed = removeDepth(rows.map(normalize));
+    if (checkKeys(rows[0], /\[\]/)) 
+        processed = group(processed, isGroup, isKey)
+    if (checkKeys(rows[0], /(##|\[\])/)) 
+        processed = clean(processed, cleanRegex);
+    return processed;
 }
 
 exports.isObject = isObject;

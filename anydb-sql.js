@@ -113,7 +113,7 @@ module.exports = function (opt) {
                         + ' in query `' + query.text 
                         + '` with params ' + JSON.stringify(query.values);
                     }
-                    fn(err, res && res.rows ? res.rows.map(grouper.normalize) : null);
+                    fn(err, res && res.rows ? grouper.process(res.rows) : null);
                 });
         };
 
