@@ -2,7 +2,7 @@ var test = require('tap').test;
 
 var anydbsql = require('../anydb-sql');
 
-var grouper = require('../grouper');
+var grouper = require('../lib/grouper');
 
 var path = require('path');
 

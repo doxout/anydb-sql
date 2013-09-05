@@ -5,7 +5,7 @@ var sql = require('sql');
 var url = require('url');
 var _   = require('lodash');
 
-var grouper = require('./grouper');
+var grouper = require('./lib/grouper');
 
 var EventEmitter = require('events').EventEmitter;
 
@@ -33,7 +33,7 @@ module.exports = function (opt) {
         if (pool) return; // already open        
         if (dialect == 'sqlite') {
             try {
-                var sqlitepool = require('./sqlite-pool');
+                var sqlitepool = require('./lib/sqlite-pool');
                 pool = sqlitepool(opt.url, opt.connections);
             } catch (e) {
                 throw new Error("Unable to load sqlite pool: " + e.message);

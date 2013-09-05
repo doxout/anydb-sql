@@ -1,5 +1,5 @@
 var util = require('util');
-var grouper = require('../grouper');
+var grouper = require('../lib/grouper');
 var t = require('tap');
 
 var _ = require('lodash');
