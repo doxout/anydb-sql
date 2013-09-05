@@ -41,15 +41,6 @@ test('anydb-sql', function(t) {
     
     t.notOk(err, 'creating table failed: ' + err);
 
-    t.test('hasMany columns', function(t) {
-        //console.log(user.posts.id);
-        var q = user.from(
-            user.join(user.posts).on(user.id.equals(user.posts.userId)));
-        q = q.selectDeep(user.id, user.posts, user.posts.user, user.posts.user.posts);
-        console.log(q.toQuery().text);
-        t.end();
-    });
-
     t.test('insert exec', function(t) {
       user.insert({id: 1, name: 'test'}).exec(function(err, res) {
         t.notOk(err, 'user inserted without errors: ' + err);
@@ -106,8 +97,8 @@ test('anydb-sql', function(t) {
       });
     });
 
-    t.test('allof', function(t) {
-        var q = user.select(db.allOf(user, user));
+    t.test('selectDeep', function(t) {
+        var q = user.from(user).selectDeep(user, user);
         var text = 'SELECT "users"."id" AS "users.id##",'
             + ' "users"."name" AS "users.name", "users"."id" AS "users.id##",'
             +' "users"."name" AS "users.name" FROM "users"';
@@ -115,16 +106,22 @@ test('anydb-sql', function(t) {
         t.end();
     });
 
+    t.test('selectDeep treats aggregates properly', function(t) {
+        var alias = db.allOf(user.posts.id.count().as('postCount'))[0].alias;
+        t.equals(alias, 'users.postCount');
+        t.end();
+    });
+
     t.test('allObject', function(t) {
         user.select(user.id, user.name).allObject("id", function(err, result) {
-            t.notOk(err, "has no error " + err);
-
+            t.notOk(err, "should have no error " + err);
             user.select(user.id, user.name).exec(function(err, data) {
-                t.equals(Object.keys(result).length, data.length, "Amount of entries should match");
+                t.equals(Object.keys(result).length, data.length, 
+                         "number of entries should match");
 
                 for (var i = 0; i < data.length; i++)
-                    t.equals(data[i].name, result[data[i].id], "Data should match");
-
+                    t.equals(data[i].name, result[data[i].id], 
+                             "data["+i+"] should match");
                 t.end();
             });
         });

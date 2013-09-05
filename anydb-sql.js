@@ -189,7 +189,7 @@ module.exports = function (opt) {
         };
         
         queryMethods.forEach(function (key) {
-            extQuery[key] = function () {
+            extQuery[key] = function extFn() {
                 var q = query[key].apply(query, arguments);
                 if (q.__extQuery) return q;
                 return extendedQuery(q);
@@ -243,6 +243,16 @@ module.exports = function (opt) {
                 tableName = column.table.alias || column.table._name;
                 return all.concat([column.as(tableName + '.' 
                                              + columnName(column))]);
+            } else if (table.aggregator) {
+                var column = table;
+                tableName = column.table.alias || column.table._name;
+                tableName = tableName.split('.').slice(0, -1).join('.');
+                return all.concat([column.as(tableName + '.' 
+                                             + columnName(column))]);
+            }
+            else {
+                console.log(table);
+                return all;
             }
         }, []);
     };
