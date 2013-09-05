@@ -22,10 +22,32 @@ Defining a table for that database is the same as in node-sql:
 
 ```js
 var user = db.define({
-    name: 'Users',
-    columns: ['id', 'email', 'password']
+    name: 'users',
+    columns: {
+        id: {primaryKey: true}, 
+        email: {}, 
+        password: {}
+    }
 });
 ```
+
+But now you can also specify relationships between tables:
+
+```js
+var user = db.define({
+    name: 'users',
+    columns: { ... }
+    has: {
+        posts: {from: 'posts', many: true},
+        group: {from: 'groups'}
+    }
+        id: {primaryKey: true}, 
+        email: {}, 
+        password: {}
+    }
+});
+```
+
 
 ## extra methods
 
@@ -35,8 +57,10 @@ Queries have all the methods as in node-sql, plus the additional methods:
   with an array of rows
 * all - same as exec
 * get(function(err, row)) - executes the query and returns the first result
-* allObject(keyColumn, function(err, map), [mapper, filter]) - executes the query and maps the result to an object
+* allObject(keyColumn, function(err, map), [mapper, filter]) - executes the 
+  query and maps the result to an object
 * execWithin(transaction, function(err, rows)) - execute within a transaction
+* selectDeep - deeply select join results (with grouping). More info below.
 
 If you omit the callback from the additional methods, an eventemitter will be 
 returned instead (like in anydb).
@@ -65,10 +89,10 @@ user.select(user.name, post.content)
 ```
 
 When creating join queries, you can generate sub-objects in the result by 
-specifying aliases that contain dots in the name:
+using `selectDeep`
 
 ```js
-user.select(user.name.as('user.name'), post.content.as('post.content'))
+user.selectDeep(user.name, post.content)
   .from(user.join(post).on(user.id.equals(post.userId)))
   .where(post.date.gt(yesterday))
   .all(function(err, res) {
@@ -76,16 +100,16 @@ user.select(user.name.as('user.name'), post.content.as('post.content'))
   });
 ```
 
-
-or you can use db.allOf to do the above for all the table's columns :
+With selectDeep you can also utilize relationships to get a full-blown
+result structures:
 
 ```js
-user.select(db.allOf(user, post))
-  .from(user.join(post).on(user.id.equals(post.userId)))
-  .where(post.date.gt(yesterday))
+user.selectDeep(user.id, user.name, user.posts)
+  .from(user.join(user.posts).on(user.id.equals(user.posts.userId)))
+  .where(user.posts.date.gt(yesterday))
   .all(function(err, res) {
-    // contains res[0].user.name, res[0].post.content and all
-    // other columns from both tables in two subobjects per row.
+    // res[0] is
+    // { id: id, name: name, posts: [postObj, postObj, ...] }
   });
 ```
 
