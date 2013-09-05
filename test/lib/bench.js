@@ -1,5 +1,5 @@
 var data = require('./grouper-data'),
-    g = require('../../grouper');
+    g = require('../../lib/grouper');
 
 
 function test(which) {
