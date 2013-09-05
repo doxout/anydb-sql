@@ -18,7 +18,7 @@ var db = anydbsql({
 });
 ```
 
-Defining a table for that database is the same as in node-sql:
+Defining a table is the same as in node-sql:
 
 ```js
 var user = db.define({
@@ -31,7 +31,7 @@ var user = db.define({
 });
 ```
 
-But now you can also specify relationships between tables:
+But now you can also add properties based on relationships between tables:
 
 ```js
 var user = db.define({
@@ -42,8 +42,11 @@ var user = db.define({
         group: {from: 'groups'}
     }
 });
+// user.posts is now a "subtable"
 ```
 
+Read about [joins and subobjects](#joins-and-subobjects) to see how you can 
+use subtables with `selectDeep`
 
 ## extra methods
 
@@ -53,19 +56,20 @@ Queries have all the methods as in node-sql, plus the additional methods:
   with an array of rows
 * all - same as exec
 * get(function(err, row)) - executes the query and returns the first result
-* allObject(keyColumn, function(err, map), [mapper, filter]) - executes the 
+* allObject(keyColumn, function(err, object), [mapper, filter]) - executes the 
   query and maps the result to an object
 * execWithin(transaction, function(err, rows)) - execute within a transaction
-* selectDeep - deeply select join results (with grouping). More info below.
+* selectDeep - deeply select join results (with grouping). More info in
+  the section [joins and subobjects](#joins-and-subobjects) below.
 
-If you omit the callback from the additional methods, an eventemitter will be 
+If you omit the callback from a querying method, an eventemitter will be 
 returned instead (like in anydb).
 
-Use regular node-sql queries then chain one of the additional methods at the 
+Use regular node-sql queries then chain one of the querying methods at the 
 end:
 
 ```js
-user.where({email: user.email}).get(function(err, user) {
+user.where({email: email}).get(function(err, user) {
   // user.name, 
 });
 ```
@@ -86,7 +90,7 @@ user.select(user.name, post.content)
 
 When creating join queries, you can generate sub-objects in the result by 
 using `selectDeep`
-
+ 
 ```js
 user.selectDeep(user.name, post.content)
   .from(user.join(post).on(user.id.equals(post.userId)))
@@ -96,7 +100,7 @@ user.selectDeep(user.name, post.content)
   });
 ```
 
-With selectDeep you can also utilize relationships to get a full-blown
+With selectDeep you can also utilize `has` relationships to get full-blown
 result structures:
 
 ```js
@@ -111,7 +115,8 @@ user.selectDeep(user.id, user.name, user.posts)
 
 ## transactions
 
-Create a transactions and execute queries within it
+To create a transaction and execute queries within it, use
+`db.begin()`
 
 ```js
 var tx = db.begin()
