@@ -41,10 +41,6 @@ var user = db.define({
         posts: {from: 'posts', many: true},
         group: {from: 'groups'}
     }
-        id: {primaryKey: true}, 
-        email: {}, 
-        password: {}
-    }
 });
 ```
 
