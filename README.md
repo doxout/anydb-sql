@@ -92,9 +92,9 @@ When creating join queries, you can generate sub-objects in the result by
 using `selectDeep`
  
 ```js
-user.selectDeep(user.name, post.content)
-  .from(user.join(post).on(user.id.equals(post.userId)))
+user.from(user.join(post).on(user.id.equals(post.userId)))
   .where(post.date.gt(yesterday))
+  .selectDeep(user.name, post.content)
   .all(function(err, res) {
     // res[0].user.name and res[0].post.content
   });
@@ -104,9 +104,9 @@ With selectDeep you can also utilize `has` relationships to get full-blown
 result structures:
 
 ```js
-user.selectDeep(user.id, user.name, user.posts)
-  .from(user.join(user.posts).on(user.id.equals(user.posts.userId)))
+user.from(user.join(user.posts).on(user.id.equals(user.posts.userId)))
   .where(user.posts.date.gt(yesterday))
+  .selectDeep(user.id, user.name, user.posts)
   .all(function(err, res) {
     // res[0] is
     // { id: id, name: name, posts: [postObj, postObj, ...] }
