@@ -66,12 +66,12 @@ module.exports = function (opt) {
         };
         extTable.eventEmitter = new EventEmitter();
 
-        if (opt.has) defineProperties(extTable, opt.has);
+        if (opt.has) defineRelations(extTable, opt.has);
         return extTable;
     }
 
 
-    function defineProperties(owner, has) {
+    function defineRelations(owner, has) {
         Object.keys(has).forEach(function(name) {
             var what = has[name],
                 table = what.from,
@@ -91,8 +91,6 @@ module.exports = function (opt) {
             });
         });
     }
-
-
 
 
     function extendedQuery(query) {
@@ -118,77 +116,19 @@ module.exports = function (opt) {
                     fn(err, res && res.rows ? grouper.process(res.rows) : null);
                 });
         };
-
+        extQuery.allWithin = extQuery.execWithin;
+        
         extQuery.exec = extQuery.execWithin.bind(extQuery, pool);
-
         extQuery.all = extQuery.exec;
 
-        extQuery.get = function (fn) {
-            return self.exec(function (err, rows) {
+        extQuery.getWithin = function(where, fn) {
+            return self.execWithin(where, function getSingleResult(err, rows) {
                 return fn(err, rows && rows.length ? rows[0] : null);
-            })
-        };
-
-        /**
-         * Returns a result from a query, mapping it to an object by a specified key.
-         * @param {!String} keyColumn the column to use as a key for the map.
-         * @param {!Function} callback called when the operation ends. Takes an error and the result.
-         * @param {String|Array|Function=} mapper can be:<ul>
-         *     <li>the name of the column to use as a value;</li>
-         *     <li>an array of column names. The value will be an object with the property names from this array mapped to the
-         *         column values from the array;</li>
-         *     <li>a function that takes the row as an argument and returns a value.</li>
-         *  </ul>
-         *                                        If omitted, assumes all other columns are values. If there is only one
-         *                                        other column, its value will be used for the object. Otherwise, the
-         *                                        value will be an object with the values mapped to column names.
-         * @param {Function=} filter takes a row and returns a value indicating whether the row should be inserted in the
-         *                           result.
-         */
-        extQuery.allObject = function(keyColumn, callback, mapper, filter) {
-            filter = filter || function() { return true; };
-
-            if (mapper) {
-                if (typeof mapper === 'string') {
-                    var str = mapper;
-                    mapper = function(row) { return row[str]; };
-                } else if (typeof mapper === 'object') {
-                    var arr = mapper;
-                    mapper = function(row) {
-                        var obj = {};
-                        for (var j = 0; j < arr.length; j++) 
-                            obj[arr[j]] = row[arr[j]];
-                        return obj;
-                    };
-                }
-            } else mapper = function(row) {
-                var validKeys = Object.keys(row).filter(function(key) { 
-                    return key != keyColumn; 
-                });
-
-                if (validKeys.length === 0) return null;
-                else if (validKeys.length == 1) return row[validKeys[0]];
-                else {
-                    var obj = {};
-                    for (var j = 0; j < validKeys.length; j++) 
-                        obj[validKeys[j]] = row[validKeys[j]];
-                    return obj;
-                }
-            };
-
-            return self.exec(function(err, data) {
-                if (err) return callback(err);
-
-                var result = {};
-                for (var i = 0; i < data.length; i++) {
-                    if (filter(data[i])) {
-                        result[data[i][keyColumn]] = mapper(data[i]);
-                    }
-                }
-
-                callback(null, result);
             });
-        };
+        }
+
+        extQuery.get = extQuery.getWithin.bind(extQuery, pool);
+
         
         queryMethods.forEach(function (key) {
             extQuery[key] = function extFn() {
