@@ -56,11 +56,11 @@ Queries have all the methods as in node-sql, plus the additional methods:
   with an array of rows
 * all - same as exec
 * get(function(err, row)) - executes the query and returns the first result
-* allObject(keyColumn, function(err, object), [mapper, filter]) - executes the 
-  query and maps the result to an object
 * execWithin(transaction, function(err, rows)) - execute within a transaction
-* selectDeep - deeply select join results (with grouping). More info in
-  the section [joins and subobjects](#joins-and-subobjects) below.
+* allWithin(tx, cb), getWithin(tx, cb) - all/get within a transaction.
+* selectDeep(args) - deeply select join results (with grouping). Arguments can 
+  be fields, tables or subtables (created with relationships).
+  More info in the section [joins and subobjects](#joins-and-subobjects) below.
 
 If you omit the callback from a querying method, an eventemitter will be 
 returned instead (like in anydb).
@@ -113,19 +113,45 @@ user.from(user.join(user.posts).on(user.id.equals(user.posts.userId)))
   });
 ```
 
+`selectDeep` can accept tables, their fields, their `has` relationships,
+relationship fields, relationships' relationships etc (recursively)
+
+```js
+user.from(user.join(user.posts).on(
+        user.id.equals(user.posts.userId))
+    .join(user.posts.comments).on(
+        user.posts.id.equals(user.posts.comments.postId))
+    .selectDeep(user.id, user.name, user.posts.id, user.posts.content, 
+        user.posts.comments).all(function(err, res) {
+            // res[0] is
+            // {id: id, name: name: posts: [
+            //     {id: pid, content: content, comments: [commentObj, ...]},
+            //     {id: pid, content: content, comments: [commentObj, ...]},
+            //     ...
+            // ]}
+            
+        });
+```
+
 ## transactions
 
 To create a transaction and execute queries within it, use
 `db.begin()`
 
+Execute constructed queries within that transaction using
+`execWithin`, `getWithin` or `allWithin`
+
 ```js
 var tx = db.begin()
 user.insert({name: 'blah'}).returning(user.id).execWithin(tx);
 user.insert({name: 'bleh'}).returning(user.id).execWithin(tx);
+user.where({name: 'blah').getWithin(tx, function(err, res) {
+    // the user is there!
+});
 tx.commit();
 ```
 
-Transactions have the same API as anydb tranactions
+Transactions also have the same API as anydb tranactions.
 
 # db.close and custom queries
 

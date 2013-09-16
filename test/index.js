@@ -59,9 +59,13 @@ test('anydb-sql', function(t) {
       db.begin(function(err, tx){
         user.insert({id: 2, name: 'test2'}).execWithin(tx);
         user.insert({id: 3, name: 'test3'}).execWithin(tx);
-        tx.commit(function(err) {
-          t.notOk(err, 'two inserts within transaction');
-          t.end();
+        user.where({id: 2}).getWithin(tx, function(err, res) {
+          t.ok(res, 'getWithin transaction should work');
+          tx.commit(function(err) {
+            t.notOk(err, 'inserts within transaction should work');
+            t.end();
+          });
+
         });
       });
     });
