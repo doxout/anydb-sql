@@ -102,6 +102,8 @@ module.exports = function (opt) {
         self.__extQuery = true;
 
         extQuery.execWithin = function (where, fn) {
+            if (!where || !where.query) 
+                throw new Error("query: Cannot execWithin " + where);
             var query = self.toQuery(); // {text, params}
             if (!fn)
                 return where.query(query.text, query.values);
