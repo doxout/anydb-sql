@@ -13,6 +13,10 @@ var queryMethods = ['select', 'from', 'insert', 'update',
     'delete', 'create', 'drop', 'alter', 'where',
     'indexes'];
 
+
+var crypto = require('crypto');
+
+
 function extractDialect(adr) {
     var dialect = url.parse(adr).protocol;
     dialect = dialect.substr(0, dialect.length - 1);
@@ -161,8 +165,13 @@ module.exports = function (opt) {
         pool = null;
     };
 
-    db.begin = pool.begin.bind(pool);
-    db.query = pool.query.bind(pool);
+    db.begin = function() {
+        var tx = pool.begin.apply(pool, arguments);
+        return wrapTransaction(tx);
+    }
+    db.query = function() { 
+        pool.query.apply(pool, arguments);
+    }
 
 
     function columnName(c) {
@@ -198,6 +207,50 @@ module.exports = function (opt) {
             }
         }, []);
     };
+
+    function wrapTransaction(tx) {
+        tx.savepoint = function() {
+            var spname = crypto.randomBytes(6).toString('base64');
+            if (dialect == 'mysql') 
+                spname = '`' + spname + '`';
+            else
+                spname = '"' + spname + '"';
+            tx.query('SAVEPOINT ' + spname);
+            function restore(cb) {
+                return tx.query('ROLLBACK TO SAVEPOINT ' + spname, cb); 
+            }
+            function release(cb) {
+                return tx.query('RELEASE SAVEPOINT ' + spname, cb); 
+            }
+            return { 
+                rollback: restore, 
+                commit: release, 
+                restore: restore,
+                release: release, 
+                query: tx.query.bind(tx)
+            };
+        };
+        return tx;
+    }
+
+    var oldpool;
+
+    db.test = {
+        end:  function() {
+            if (pool.rollback) {
+                pool.rollback();
+                pool = oldpool;
+            }
+        }, begin: function() {
+            if (!pool) db.open();
+            if (!pool.rollback) {
+                oldpool = pool;
+                pool = db.begin();
+                pool.begin = pool.savepoint
+            }
+        }
+    };
+
 
     return db;
 

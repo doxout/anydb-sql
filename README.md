@@ -135,11 +135,10 @@ user.from(user.join(user.posts).on(
 
 ## transactions
 
-To create a transaction and execute queries within it, use
-`db.begin()`
+To create a transaction and execute queries within it, use `db.begin()`
 
-Execute constructed queries within that transaction using
-`execWithin`, `getWithin` or `allWithin`
+Execute constructed queries within that transaction using `execWithin`, 
+`getWithin` or `allWithin`
 
 ```js
 var tx = db.begin()
@@ -151,7 +150,14 @@ user.where({name: 'blah').getWithin(tx, function(err, res) {
 tx.commit();
 ```
 
-Transactions also have the same API as anydb tranactions.
+Transactions have the same API as anydb tranactions, but they also support 
+savepoints:
+
+```js
+var sp = tx.savepoint();
+sp.release();
+sp.restore();
+```
 
 # db.close and custom queries
 
