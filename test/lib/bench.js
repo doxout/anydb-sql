@@ -30,7 +30,7 @@ for (var k = 0; k < 10; ++k) {
 function testWith(tag, data, dur) {
     var t = Date.now(), n = 0, k = 0;
     for (;;) {
-        if (++k > 100) { 
+        if (++k > 200) { 
             k = 1; 
             if (Date.now() - t > dur) break;
         }
@@ -43,7 +43,7 @@ function testWith(tag, data, dur) {
 
 
 var n = 30000;
-testWith('full', data.raw, 2000);
-testWith('clean', cleanData, 2000);
-testWith('depth', depthData, 2000);
-testWith('dirty', dirtyData, 2000);
+testWith('full', data.raw, 3000);
+testWith('clean', cleanData, 3000);
+testWith('depth', depthData, 3000);
+testWith('dirty', dirtyData, 3000);
