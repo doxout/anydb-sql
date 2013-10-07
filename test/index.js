@@ -55,6 +55,13 @@ test('anydb-sql', function(t) {
       });
     });
 
+    t.test('where get .then', function(t) {
+        user.where({id: 1}).get().then(function(user) {
+            t.deepEquals(user, {id: 1, name: 'test'});
+            t.end();
+        });
+    });
+
     t.test('insert transaction', function(t) {
       db.begin(function(err, tx){
         user.insert({id: 2, name: 'test2'}).execWithin(tx);
@@ -92,10 +99,8 @@ test('anydb-sql', function(t) {
       var query = user.from(user.join(userx).on(user.id.equals(userx.id)))
         .where(userx.id.equals(1))
         .select(userx.id);
-      //console.log(query.toQuery())
 
       query.get(function(err, res) {
-        //console.log(err, res);
         t.equals(res.id,  1, 'user.id is 1');    
         t.end();
       });

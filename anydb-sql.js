@@ -16,6 +16,7 @@ var queryMethods = ['select', 'from', 'insert', 'update',
 
 var crypto = require('crypto');
 
+var P = require('bluebird');
 
 function extractDialect(adr) {
     var dialect = url.parse(adr).protocol;
@@ -23,6 +24,19 @@ function extractDialect(adr) {
     if (dialect == 'sqlite3') 
         dialect = 'sqlite';
     return dialect;
+}
+
+function wrapQuery(ctx) {
+    var oldquery = ctx.query;
+    var pquery = P.promisify(ctx.query, ctx);
+    ctx.query = function(q, args, cb) {
+        if (typeof(args) === 'function') { 
+            cb = args; 
+            args = undefined; 
+        }
+        return pquery(q, args).nodeify(cb);
+    }
+    return ctx;
 }
 
 module.exports = function (opt) {
@@ -46,6 +60,7 @@ module.exports = function (opt) {
         else {
             pool = anyDB.createPool(opt.url, opt.connections);
         }
+        wrapQuery(pool);
     }
 
     db.open();
@@ -107,18 +122,17 @@ module.exports = function (opt) {
             if (!where || !where.query) 
                 throw new Error("query: Cannot execWithin " + where);
             var query = self.toQuery(); // {text, params}
-            if (!fn)
-                return where.query(query.text, query.values);
-            else
-                return where.query(query.text, query.values, function (err, res) {
-                    if (err) {
-                        err = new Error(err);
-                        err.message = err.message.substr('Error  '.length) 
-                        + ' in query `' + query.text 
-                        + '` with params ' + JSON.stringify(query.values);
-                    }
-                    fn(err, res && res.rows ? grouper.process(res.rows) : null);
-                });
+
+            return where.query(query.text, query.values)
+            .then(function (res) {
+                return res && res.rows ? grouper.process(res.rows) : null;
+            }, function(err) {
+                err = new Error(err);
+                err.message = err.message.substr('Error  '.length) 
+                    + ' in query `' + query.text 
+                    + '` with params ' + JSON.stringify(query.values);
+                throw err;
+            }).nodeify(fn);
         };
         extQuery.allWithin = extQuery.execWithin;
         
@@ -126,9 +140,9 @@ module.exports = function (opt) {
         extQuery.all = extQuery.exec;
 
         extQuery.getWithin = function(where, fn) {
-            return self.execWithin(where, function getSingleResult(err, rows) {
-                return fn(err, rows && rows.length ? rows[0] : null);
-            });
+            return self.execWithin(where).then(function(rows) {
+               return rows && rows.length ? rows[0] : null;
+            }).nodeify(fn);
         }
 
         extQuery.get = extQuery.getWithin.bind(extQuery, pool);
@@ -202,7 +216,6 @@ module.exports = function (opt) {
                                              + columnName(column))]);
             }
             else {
-                console.log(table);
                 return all;
             }
         }, []);
@@ -222,14 +235,19 @@ module.exports = function (opt) {
             function release(cb) {
                 return tx.query('RELEASE SAVEPOINT ' + spname, cb); 
             }
+            console.log('tx savepoint');
             return { 
                 rollback: restore, 
                 commit: release, 
                 restore: restore,
                 release: release, 
-                query: tx.query.bind(tx)
+                query: function() { 
+                    console.log('sp query');
+                    return tx.query.apply(tx, arguments); 
+                }
             };
         };
+        wrapQuery(tx);
         return tx;
     }
 

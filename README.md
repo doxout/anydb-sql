@@ -62,8 +62,8 @@ Queries have all the methods as in node-sql, plus the additional methods:
   be fields, tables or subtables (created with relationships).
   More info in the section [joins and subobjects](#joins-and-subobjects) below.
 
-If you omit the callback from a querying method, an eventemitter will be 
-returned instead (like in anydb).
+If you omit the callback from a querying method, a promise will be 
+returned instead.
 
 Use regular node-sql queries then chain one of the querying methods at the 
 end:
