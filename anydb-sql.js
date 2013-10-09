@@ -29,19 +29,21 @@ function extractDialect(adr) {
 }
 
 function wrapQuery(ctx) {
+    if (ctx._wrapquery) return ctx;
     var res = Object.create(ctx);
     res._wrapquery = true;
+
     res.query = function(q, args, cb) {
         if (typeof(args) === 'function') { 
             cb = args; 
             args = undefined; 
         }
-        return new P(function(resolve, reject) {
-            ctx.query(q, args, function(err, res) {
-                if (err) reject(err);
-                else resolve(err);
-            })
-        }).nodeify(cb);
+        var r = P.pending();
+        ctx.query(q, args, function(err, res) {
+            if (err) r.reject(err);
+            else r.fulfill(res);
+        })
+        return r.promise.nodeify(cb);
     }
     return res;
 }
@@ -67,6 +69,7 @@ module.exports = function (opt) {
         else {
             pool = anyDB.createPool(opt.url, opt.connections);
         }
+        pool._mainpool = true;
         pool = wrapQuery(pool);
     }
 
@@ -130,11 +133,8 @@ module.exports = function (opt) {
                 throw new Error("query: Cannot execWithin " + where);
             var query = self.toQuery(); // {text, params}
 
-            var q = where.query(query.text, query.values);
-            if (!q.then) {
-            //console.log(where, where.query.toString());
-            }
-            return q.then(function (res) {
+            var resPromise = where.query(query.text, query.values);
+            return resPromise.then(function (res) {
                 return res && res.rows ? grouper.process(res.rows) : null;
             }, function(err) {
                 err = new Error(err);
@@ -151,8 +151,6 @@ module.exports = function (opt) {
 
         extQuery.getWithin = function(where, fn) {
             var q = self.execWithin(where);
-            //console.log(where, where.query);
-            //console.log(q);
             return q.then(function(rows) {
                return rows && rows.length ? rows[0] : null;
             }).nodeify(fn);
@@ -193,11 +191,11 @@ module.exports = function (opt) {
     };
 
     db.begin = function() {
-        var tx = pool.begin.apply(pool, arguments);
+        var tx = pool.begin();
         return wrapTransaction(tx);
     }
     db.query = function() { 
-        pool.query.apply(pool, arguments);
+        return pool.query.apply(pool, arguments);
     }
 
 
@@ -248,7 +246,6 @@ module.exports = function (opt) {
             function release(cb) {
                 return tx.query('RELEASE SAVEPOINT ' + spname, cb); 
             }
-            console.log('tx savepoint');
             return { 
                 __savepoint: true,
                 rollback: restore, 
@@ -256,14 +253,12 @@ module.exports = function (opt) {
                 restore: restore,
                 release: release, 
                 query: function() { 
-                    console.log('sp query');
                     return tx.query.apply(tx, arguments); 
                 }
             };
         };
-        tx = wrapQuery(tx);
         tx.__transaction = true;
-        return tx;
+        return wrapQuery(tx);
     }
 
     var oldpool;
