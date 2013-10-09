@@ -18,6 +18,8 @@ var crypto = require('crypto');
 
 var P = require('bluebird');
 
+var util = require('util');
+
 function extractDialect(adr) {
     var dialect = url.parse(adr).protocol;
     dialect = dialect.substr(0, dialect.length - 1);
@@ -27,16 +29,21 @@ function extractDialect(adr) {
 }
 
 function wrapQuery(ctx) {
-    var oldquery = ctx.query;
-    var pquery = P.promisify(ctx.query, ctx);
-    ctx.query = function(q, args, cb) {
+    var res = Object.create(ctx);
+    res._wrapquery = true;
+    res.query = function(q, args, cb) {
         if (typeof(args) === 'function') { 
             cb = args; 
             args = undefined; 
         }
-        return pquery(q, args).nodeify(cb);
+        return new P(function(resolve, reject) {
+            ctx.query(q, args, function(err, res) {
+                if (err) reject(err);
+                else resolve(err);
+            })
+        }).nodeify(cb);
     }
-    return ctx;
+    return res;
 }
 
 module.exports = function (opt) {
@@ -60,7 +67,7 @@ module.exports = function (opt) {
         else {
             pool = anyDB.createPool(opt.url, opt.connections);
         }
-        wrapQuery(pool);
+        pool = wrapQuery(pool);
     }
 
     db.open();
@@ -123,8 +130,11 @@ module.exports = function (opt) {
                 throw new Error("query: Cannot execWithin " + where);
             var query = self.toQuery(); // {text, params}
 
-            return where.query(query.text, query.values)
-            .then(function (res) {
+            var q = where.query(query.text, query.values);
+            if (!q.then) {
+            //console.log(where, where.query.toString());
+            }
+            return q.then(function (res) {
                 return res && res.rows ? grouper.process(res.rows) : null;
             }, function(err) {
                 err = new Error(err);
@@ -140,7 +150,10 @@ module.exports = function (opt) {
         extQuery.all = extQuery.exec;
 
         extQuery.getWithin = function(where, fn) {
-            return self.execWithin(where).then(function(rows) {
+            var q = self.execWithin(where);
+            //console.log(where, where.query);
+            //console.log(q);
+            return q.then(function(rows) {
                return rows && rows.length ? rows[0] : null;
             }).nodeify(fn);
         }
@@ -237,6 +250,7 @@ module.exports = function (opt) {
             }
             console.log('tx savepoint');
             return { 
+                __savepoint: true,
                 rollback: restore, 
                 commit: release, 
                 restore: restore,
@@ -247,7 +261,8 @@ module.exports = function (opt) {
                 }
             };
         };
-        wrapQuery(tx);
+        tx = wrapQuery(tx);
+        tx.__transaction = true;
         return tx;
     }
 

@@ -13,7 +13,9 @@ var depthData = [];
 
 var dirtyData = [];
 
-for (var k = 0; k < 10; ++k) {
+var NUM = 100;
+
+for (var k = 0; k < NUM; ++k) {
     cleanData.push({id: k, name: 'name'+k, age: k*2, content: 'abc'});
 
     depthData.push({'data.id': k, 
@@ -29,20 +31,24 @@ for (var k = 0; k < 10; ++k) {
 
 function testWith(tag, data, dur) {
     var t = Date.now(), n = 0, k = 0;
+
+    // Default rows = 10
+    var nnum = tag == 'full' ? 10 : NUM;
+
     for (;;) {
-        if (++k > 200) { 
+        if (++k*NUM > 500) { 
             k = 1; 
             if (Date.now() - t > dur) break;
         }
         test(data);
         ++n;
     }
+    console.log(tag, (nnum * n / (Date.now() - t)).toFixed(0), 'rows/ms');
     console.log(tag, (1000 * n / (Date.now() - t)).toFixed(0), 'q/s');
 }
 
 
 
-var n = 30000;
 testWith('full', data.raw, 3000);
 testWith('clean', cleanData, 3000);
 testWith('depth', depthData, 3000);
