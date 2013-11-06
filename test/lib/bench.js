@@ -1,3 +1,4 @@
+
 var data = require('./grouper-data'),
     g = require('../../lib/grouper');
 
@@ -13,7 +14,7 @@ var depthData = [];
 
 var dirtyData = [];
 
-var NUM = 100;
+var NUM = 10;
 
 for (var k = 0; k < NUM; ++k) {
     cleanData.push({id: k, name: 'name'+k, age: k*2, content: 'abc'});
@@ -44,7 +45,7 @@ function testWith(tag, data, dur) {
         ++n;
     }
     console.log(tag, (nnum * n / (Date.now() - t)).toFixed(0), 'rows/ms');
-    console.log(tag, (1000 * n / (Date.now() - t)).toFixed(0), 'q/s');
+    //console.log(tag, (1000 * n / (Date.now() - t)).toFixed(0), 'q/s');
 }
 
 
