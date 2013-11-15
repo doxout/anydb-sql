@@ -34,7 +34,8 @@ function testWith(tag, data, dur) {
     var t = Date.now(), n = 0, k = 0;
 
     // Default rows = 10
-    var nnum = tag == 'full' ? 10 : NUM;
+    var nnum = data.length;
+    //var nnum = tag == 'full' ? data.length : NUM;
 
     for (;;) {
         if (++k*NUM > 500) { 
