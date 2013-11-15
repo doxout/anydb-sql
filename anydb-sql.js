@@ -183,6 +183,7 @@ module.exports = function (opt) {
         return t;
     };
 
+    db.functions = sql.functions;
 
     db.close = function() {
         if (pool) 
