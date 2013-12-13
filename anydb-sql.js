@@ -205,7 +205,7 @@ module.exports = function (opt) {
 
     function columnName(c) {
         var name = c.alias || c.name;
-        if (c.primaryKey) 
+        if (c.primaryKey && !c.aggregator)
             name = name + '##';
         return name;
     }

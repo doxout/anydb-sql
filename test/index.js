@@ -75,15 +75,6 @@ test('anydb-sql', function(t) {
 
       });
     });
-
-    t.test('incorrect query', function(t) {
-      user.insert({id: 4, name: 'lol'}).returning(user.id).exec(function(err, results) {
-        t.ok(err, 'should be an incorrect query: ' + err);
-        t.notOk(results, 'should return null results: ' + results)
-        t.end();
-      });
-    });
-
     t.test('resultless get', function(t) {
       user.where({id: 40}).get(function(err, usr) {
         t.notOk(err, 'has no error');
