@@ -1,8 +1,9 @@
 # anydb-sql
 
-anydb-sql combines [node-anydb](https://github.com/grncdr/node-any-db)
-and [node-sql](https://github.com/brianc/node-sql) into a single package full 
-of awesomeness.
+Minimal ORM for mysql, postgresql and sqlite with complete arbitrary SQL query support.
+
+Based on the [node-sql](https://github.com/brianc/node-sql) query builder and 
+[node-anydb](https://github.com/grncdr/node-any-db) connection pool
 
 # examples and usage:
 
@@ -158,6 +159,11 @@ var sp = tx.savepoint();
 sp.release();
 sp.restore();
 ```
+
+# query building syntax
+
+For more info on how to build queries, look at 
+[the node-sql test samples and their corresponding SQL](https://github.com/brianc/node-sql/tree/master/test/dialects)
 
 # db.close and custom queries
 

@@ -74,7 +74,6 @@ module.exports = function (opt) {
     }
 
     db.open();
-
     db.models = {};
 
     function extendedTable(table, opt) {
@@ -100,6 +99,7 @@ module.exports = function (opt) {
     }
 
 
+    function tableName(t) { return t.alias || t._name; }
     function defineRelations(owner, has) {
         Object.keys(has).forEach(function(name) {
             var what = has[name],
@@ -113,8 +113,11 @@ module.exports = function (opt) {
                             foreign = db.models[table];
                         else
                             foreign = table;
-                    var ownerName = owner.alias || owner._name;
-                    return foreign.as(ownerName + '.' + name + many);
+                    var ownerName = tableName(owner);
+                    var aliased = foreign.as(ownerName + '.' + name + many);
+                    // Mark that this table is a subtable
+                    aliased.__isSubtable = true;
+                    return aliased;
 
                 } 
             });
@@ -207,8 +210,24 @@ module.exports = function (opt) {
         return name;
     }
 
+
+    function tableTypes(tables) {
+        return {
+            sub:tables.filter(function(t) { return t.__isSubtable; })
+                .map(tableName),
+            normal:tables.filter(function(t) { return !t.__isSubtable; })
+                .map(tableName)
+        };
+    }
+
     db.allOf = function() {
         var tables = [].slice.call(arguments);
+        var ttypes = tableTypes(tables);
+        if (ttypes.sub.length > 0 && ttypes.normal.length > 1)
+            throw new RangeError(
+                "Only one main table is allowed when selecting subtables, " 
+               + ttypes.normal.length + " found. " + ttypes.normal );
+
         return tables.reduce(function (all, table) {
             var tableName = table.alias || table._name;
             if (table.columns) 
