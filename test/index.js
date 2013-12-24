@@ -59,21 +59,25 @@ test('anydb-sql', function(t) {
         user.where({id: 1}).get().then(function(user) {
             t.deepEquals(user, {id: 1, name: 'test'});
             t.end();
-        });
+        }).done();
     });
 
     t.test('insert transaction', function(t) {
-      var tx = db.begin(); 
-      user.insert({id: 2, name: 'test2'}).execWithin(tx);
-      user.insert({id: 3, name: 'test3'}).execWithin(tx);
-      user.where({id: 2}).getWithin(tx, function(err, res) {
-        t.ok(res, 'getWithin transaction should work');
-        tx.commit(function(err) {
-          t.notOk(err, 'inserts within transaction should work');
-          t.end();
-        });
-
-      });
+        return db.transaction(function(tx) {
+            return user.insert({id: 2, name: 'test2'}).execWithin(tx)
+            .then(function() {
+                return user.insert({id: 3, name: 'test3'}).execWithin(tx);
+            }).then(function() {
+                return user.where({id: 2}).getWithin(tx)
+            }).then(function(res) {
+                t.ok(res, 'getWithin transaction should work');
+                t.end();
+                return true;
+            });
+        }).done(null, function(e) {
+            t.notOk(e, 'db.transaction should not throw');
+            t.end();
+        })
     });
     t.test('resultless get', function(t) {
       user.where({id: 40}).get(function(err, usr) {

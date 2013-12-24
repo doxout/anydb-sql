@@ -151,6 +151,15 @@ user.where({name: 'blah').getWithin(tx, function(err, res) {
 tx.commit();
 ```
 
+When using promises, you can also use the safer API:
+
+```js
+db.transaction(function(tx) { ... })
+```
+
+and you will get autocommit / autorollback depending on whether the promise
+returned within the passed function is fulfilled or rejected.
+
 Transactions have the same API as anydb tranactions, but they also support 
 savepoints:
 
@@ -163,7 +172,8 @@ sp.restore();
 # query building syntax
 
 For more info on how to build queries, look at 
-[the node-sql test samples and their corresponding SQL](https://github.com/brianc/node-sql/tree/master/test/dialects)
+[the node-sql test samples and their corresponding 
+SQL](https://github.com/brianc/node-sql/tree/master/test/dialects)
 
 # db.close and custom queries
 
@@ -178,6 +188,7 @@ Or execute custom queries
 ```js
 db.query(...anydb arguments...)
 ```
+
 
 # licence
 

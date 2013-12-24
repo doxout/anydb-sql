@@ -196,16 +196,16 @@ module.exports = function (opt) {
         return wrapTransaction(tx);
     }
 
-    db.withTransaction = function(f) { 
-        return P.try(P.cast, db.begin()).then(function(tx) {
+    db.transaction = function(f) { 
+        return P.try(function() {
+            return wrapTransaction(pool.begin());
+        }).then(function(tx) {
             return P.try(f, tx).then(function(res) {
-                tx.commit();
-                return res;
+                return tx.commitAsync().thenReturn(res);
             }, function(err) {
-                tx.rollback();
-                throw err;
-            })
-        })
+                return tx.rollbackAsync().thenThrow(err);
+            });
+        });
     }
 
     db.query = function() { 
