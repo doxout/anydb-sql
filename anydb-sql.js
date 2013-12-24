@@ -30,20 +30,14 @@ function extractDialect(adr) {
 
 function wrapQuery(ctx) {
     if (ctx._wrapquery) return ctx;
-    var res = Object.create(ctx);
+    var res = ctx; 
     res._wrapquery = true;
-
-    res.query = function(q, args, cb) {
-        if (typeof(args) === 'function') { 
-            cb = args; 
-            args = undefined; 
-        }
-        var r = P.pending();
-        ctx.query(q, args, function(err, res) {
-            if (err) r.reject(err);
-            else r.fulfill(res);
-        })
-        return r.promise.nodeify(cb);
+    if (typeof(res.queryAsync) !== 'function') {
+        if (!res.queryAsync)
+            if (res._mainpool || res._transaction)
+                P.promisifyAll(Object.getPrototypeOf(res));
+            else
+                P.promisifyAll(res);
     }
     return res;
 }
@@ -60,14 +54,15 @@ module.exports = function (opt) {
         if (pool) return; // already open        
         if (dialect == 'sqlite') {
             try {
-                var sqlitepool = require('./lib/sqlite-pool');
-                pool = sqlitepool(opt.url, opt.connections);
+                var SQLitePool = require('./lib/sqlite-pool');
+                pool = new SQLitePool(opt.url, opt.connections);
+                
             } catch (e) {
                 throw new Error("Unable to load sqlite pool: " + e.message);
             }
         }
         else {
-            pool = anyDB.createPool(opt.url, opt.connections);
+            pool = anyDB.createPool(opt.url, opt.connections);            
         }
         pool._mainpool = true;
         pool = wrapQuery(pool);
@@ -132,11 +127,13 @@ module.exports = function (opt) {
         self.__extQuery = true;
 
         extQuery.execWithin = function (where, fn) {
-            if (!where || !where.query) 
+            if (!where || !where.queryAsync) {
+                console.error(where);
                 throw new Error("query: Cannot execWithin " + where);
+            }
             var query = self.toQuery(); // {text, params}
 
-            var resPromise = where.query(query.text, query.values);
+            var resPromise = where.queryAsync(query.text, query.values);
             return resPromise.then(function (res) {
                 return res && res.rows ? grouper.process(res.rows) : null;
             }, function(err) {
@@ -198,6 +195,19 @@ module.exports = function (opt) {
         var tx = pool.begin();
         return wrapTransaction(tx);
     }
+
+    db.withTransaction = function(f) { 
+        return P.try(P.cast, db.begin()).then(function(tx) {
+            return P.try(f, tx).then(function(res) {
+                tx.commit();
+                return res;
+            }, function(err) {
+                tx.rollback();
+                throw err;
+            })
+        })
+    }
+
     db.query = function() { 
         return pool.query.apply(pool, arguments);
     }
@@ -259,7 +269,7 @@ module.exports = function (opt) {
                 spname = '`' + spname + '`';
             else
                 spname = '"' + spname + '"';
-            tx.query('SAVEPOINT ' + spname);
+            tx.query('SAVEPOINT ' + spname);            
             function restore(cb) {
                 return tx.query('ROLLBACK TO SAVEPOINT ' + spname, cb); 
             }
