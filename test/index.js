@@ -79,6 +79,17 @@ test('anydb-sql', function(t) {
             t.end();
         })
     });
+
+    t.test('failed transaction', function(t) {
+        return db.transaction(function(tx) {
+            throw new Error("Transaction failed");
+        }).done(null, function(e) {
+            t.ok(e, 'db.transaction should fail');
+            t.end();
+        })
+    });
+
+
     t.test('resultless get', function(t) {
       user.where({id: 40}).get(function(err, usr) {
         t.notOk(err, 'has no error');
