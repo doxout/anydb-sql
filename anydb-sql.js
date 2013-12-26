@@ -309,6 +309,9 @@ module.exports = function (opt) {
         }
     };
 
+    db.getPool = function() {
+        return pool;
+    };
 
     return db;
 
