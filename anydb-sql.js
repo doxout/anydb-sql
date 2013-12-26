@@ -3,7 +3,6 @@ var anyDB = require('any-db');
 
 var sql = require('sql');
 var url = require('url');
-var _   = require('lodash');
 
 var grouper = require('./lib/grouper');
 
