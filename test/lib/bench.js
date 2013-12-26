@@ -3,6 +3,8 @@ var data = require('./grouper-data'),
     g = require('../../lib/grouper');
 
 
+!(function toplevel() {
+
 function test(which) {
     g.process(which);
 }
@@ -35,8 +37,6 @@ function testWith(tag, data, dur) {
 
     // Default rows = 10
     var nnum = data.length;
-    //var nnum = tag == 'full' ? data.length : NUM;
-
     for (;;) {
         if (++k*NUM > 500) { 
             k = 1; 
@@ -46,7 +46,6 @@ function testWith(tag, data, dur) {
         ++n;
     }
     console.log(tag, (nnum * n / (Date.now() - t)).toFixed(0), 'rows/ms');
-    //console.log(tag, (1000 * n / (Date.now() - t)).toFixed(0), 'q/s');
 }
 
 
@@ -55,3 +54,5 @@ testWith('full', data.raw, 3000);
 testWith('clean', cleanData, 3000);
 testWith('depth', depthData, 3000);
 testWith('dirty', dirtyData, 3000);
+
+}());

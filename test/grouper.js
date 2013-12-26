@@ -2,7 +2,6 @@ var util = require('util');
 var grouper = require('../lib/grouper');
 var t = require('tap');
 
-var _ = require('lodash');
 
 t.test('normalizer', function(t) {
     var n = grouper.normalize;
