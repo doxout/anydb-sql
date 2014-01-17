@@ -126,6 +126,21 @@ test('anydb-sql', function(t) {
         t.end();
     });
 
+    t.test('selectDeep recognizes non-tables properly', function(t) {
+        var q = user.from(user.join(user.posts)).selectDeep(user.id, user.name, user.posts);
+        t.end();
+    });
+    t.test('selectDeep recognizes tables properly', function(t) {
+        try {
+            var q = user.from(user.join(user.posts)).selectDeep(user.id, post, user.posts);
+            t.notOk(true, 'should throw, but did not')
+            t.end();
+        } catch (e) {
+            t.ok(true, 'should trow, and did');
+            t.end();
+        }
+    });
+
     t.test('db.close', function(t) {
       t.plan(1);
       db.close(function(err) {

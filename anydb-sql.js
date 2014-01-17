@@ -1,23 +1,18 @@
 var anyDB = require('any-db');
-
-
 var sql = require('sql');
 var url = require('url');
-
 var grouper = require('./lib/grouper');
-
 var EventEmitter = require('events').EventEmitter;
-
-var queryMethods = ['select', 'from', 'insert', 'update',
-    'delete', 'create', 'drop', 'alter', 'where',
-    'indexes'];
-
-
 var crypto = require('crypto');
-
 var P = require('bluebird');
-
 var util = require('util');
+
+var queryMethods = [
+    'select', 'from', 'insert', 'update',
+    'delete', 'create', 'drop', 'alter', 'where',
+    'indexes'
+];
+
 
 function extractDialect(adr) {
     var dialect = url.parse(adr).protocol;
@@ -87,8 +82,10 @@ module.exports = function (opt) {
             return extendedTable(table.as.apply(table, arguments), opt);
         };
         extTable.eventEmitter = new EventEmitter();
+        extTable.__isTable = true;
 
-        if (opt.has) defineRelations(extTable, opt.has);
+        if (opt.has) 
+            defineRelations(extTable, opt.has);
         return extTable;
     }
 
@@ -171,7 +168,6 @@ module.exports = function (opt) {
         };
 
 
-
         return extQuery;
     }
 
@@ -221,11 +217,19 @@ module.exports = function (opt) {
 
 
     function tableTypes(tables) {
+        var sub = {}, normal = {};
+        tables.forEach(function(t) {
+            if (!(t.__isTable || t.__isSubtable))
+                t = t.table;
+            if (t.__isSubtable) 
+                sub[tableName(t)] = true;
+            else 
+                normal[tableName(t)] = true;
+        });
+
         return {
-            sub:tables.filter(function(t) { return t.__isSubtable; })
-                .map(tableName),
-            normal:tables.filter(function(t) { return !t.__isSubtable; })
-                .map(tableName)
+            sub: Object.keys(sub),
+            normal: Object.keys(normal)
         };
     }
 
