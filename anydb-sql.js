@@ -132,8 +132,8 @@ module.exports = function (opt) {
             var resPromise = where.queryAsync(query.text, query.values);
             return resPromise.then(function (res) {
                 if (where._logQueries) {
-                    console.log("anydb-sql query complete:", query.text);
-                    console.log("anydb-sql with params:", query.values);
+                    console.log("anydb-sql query complete: `" + query.text 
+                                + "` with params", query.values);
                 }
                 return res && res.rows ? grouper.process(res.rows) : null;
             }, function(err) {
