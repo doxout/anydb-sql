@@ -131,6 +131,10 @@ module.exports = function (opt) {
 
             var resPromise = where.queryAsync(query.text, query.values);
             return resPromise.then(function (res) {
+                if (where._logQueries) {
+                    console.log("anydb-sql query complete:", query.text);
+                    console.log("anydb-sql with params:", query.values);
+                }
                 return res && res.rows ? grouper.process(res.rows) : null;
             }, function(err) {
                 err = new Error(err);
@@ -291,6 +295,9 @@ module.exports = function (opt) {
             };
         };
         tx.__transaction = true;
+        tx.logQueries = function(enabled) {
+            tx._logQueries = enabled;
+        }
         return wrapQuery(tx);
     }
 

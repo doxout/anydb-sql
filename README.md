@@ -7,6 +7,8 @@ Based on the [node-sql](https://github.com/brianc/node-sql) query builder and
 
 # examples and usage:
 
+## initialization
+
 Initializing an instance also creates a connection pool. The url argument is 
 the same as in node-anydb
 
@@ -18,6 +20,8 @@ var db = anydbsql({
     connections: { min: 2, max: 20 }
 });
 ```
+
+## table definition
 
 Defining a table is the same as in node-sql:
 
@@ -32,7 +36,10 @@ var user = db.define({
 });
 ```
 
-But now you can also add properties based on relationships between tables:
+### relationships
+
+You can also add properties to the table that are based on relationships 
+between tables by adding a `has` property
 
 ```js
 var user = db.define({
@@ -49,7 +56,7 @@ var user = db.define({
 Read about [joins and subobjects](#joins-and-subobjects) to see how you can 
 use subtables with `selectDeep`
 
-## extra methods
+## extra query methods
 
 Queries have all the methods as in node-sql, plus the additional methods:
 
@@ -160,8 +167,12 @@ db.transaction(function(tx) { ... })
 and you will get autocommit / autorollback depending on whether the promise
 returned within the passed function is fulfilled or rejected.
 
-Transactions have the same API as anydb tranactions, but they also support 
-savepoints:
+Transactions have the same API as anydb tranactions, but they're extended with 
+the following methods:
+
+### `tx.savepoint()`
+
+Transactions support savepoints
 
 ```js
 var sp = tx.savepoint();
@@ -169,26 +180,32 @@ sp.release();
 sp.restore();
 ```
 
+### `tx.logQueries([enable])`
+
+Will cause the queries executed within the transaction to be logged. This 
+method should be useful for debugging purposes. The parameter is a boolean.
+
 # query building syntax
 
 For more info on how to build queries, look at 
 [the node-sql test samples and their corresponding 
 SQL](https://github.com/brianc/node-sql/tree/master/test/dialects)
 
-# db.close and custom queries
+# `db.close`
 
-You can close the connection pool
+You can close the connection pool using `db.close`
 
 ```js
 db.close();
 ```
 
-Or execute custom queries
+# `db.query`
+
+To execute custom queries, use `db.query`
 
 ```js
 db.query(...anydb arguments...)
 ```
-
 
 # licence
 
