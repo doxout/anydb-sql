@@ -17,14 +17,14 @@ var queryMethods = [
 function extractDialect(adr) {
     var dialect = url.parse(adr).protocol;
     dialect = dialect.substr(0, dialect.length - 1);
-    if (dialect == 'sqlite3') 
+    if (dialect == 'sqlite3')
         dialect = 'sqlite';
     return dialect;
 }
 
 function wrapQuery(ctx) {
     if (ctx._wrapquery) return ctx;
-    var res = ctx; 
+    var res = ctx;
     res._wrapquery = true;
     if (typeof(res.queryAsync) !== 'function') {
         if (!res.queryAsync)
@@ -38,25 +38,24 @@ function wrapQuery(ctx) {
 
 module.exports = function (opt) {
 
-    var pool, 
+    var pool,
         db = {},
         dialect = extractDialect(opt.url);
 
     sql.setDialect(dialect);
 
     db.open = function() {
-        if (pool) return; // already open        
+        if (pool) return; // already open
         if (dialect == 'sqlite') {
             try {
                 var SQLitePool = require('./lib/sqlite-pool');
                 pool = new SQLitePool(opt.url, opt.connections);
-                
             } catch (e) {
                 throw new Error("Unable to load sqlite pool: " + e.message);
             }
         }
         else {
-            pool = anyDB.createPool(opt.url, opt.connections);            
+            pool = anyDB.createPool(opt.url, opt.connections);
         }
         pool._mainpool = true;
         pool = wrapQuery(pool);
@@ -67,7 +66,7 @@ module.exports = function (opt) {
 
     function extendedTable(table, opt) {
         // inherit everything from a regular table.
-        var extTable = Object.create(table); 
+        var extTable = Object.create(table);
 
         // make query methods return extended queries.
         queryMethods.forEach(function (key) {
@@ -84,7 +83,7 @@ module.exports = function (opt) {
         extTable.eventEmitter = new EventEmitter();
         extTable.__isTable = true;
 
-        if (opt.has) 
+        if (opt.has)
             defineRelations(extTable, opt.has);
         return extTable;
     }
@@ -95,10 +94,10 @@ module.exports = function (opt) {
         Object.keys(has).forEach(function(name) {
             var what = has[name],
                 table = what.from,
-                many = what.many ? '[]' : '',
+                many = what.many ? '[]' : '{}',
                 foreign;
-            Object.defineProperty(owner, name, { 
-                get: function() {                                  
+            Object.defineProperty(owner, name, {
+                get: function() {
                     if (!foreign)
                         if (typeof(table) == 'string')
                             foreign = db.models[table];
@@ -109,8 +108,7 @@ module.exports = function (opt) {
                     // Mark that this table is a subtable
                     aliased.__isSubtable = true;
                     return aliased;
-
-                } 
+                }
             });
         });
     }
@@ -132,20 +130,19 @@ module.exports = function (opt) {
             var resPromise = where.queryAsync(query.text, query.values);
             return resPromise.then(function (res) {
                 if (where._logQueries) {
-                    console.log("anydb-sql query complete: `" + query.text 
+                    console.log("anydb-sql query complete: `" + query.text
                                 + "` with params", query.values);
                 }
                 return res && res.rows ? grouper.process(res.rows) : null;
             }, function(err) {
                 err = new Error(err);
-                err.message = err.message.substr('Error  '.length) 
-                    + ' in query `' + query.text 
+                err.message = err.message.substr('Error  '.length)
+                    + ' in query `' + query.text
                     + '` with params ' + JSON.stringify(query.values);
                 throw err;
             }).nodeify(fn);
         };
         extQuery.allWithin = extQuery.execWithin;
-        
         extQuery.exec = extQuery.execWithin.bind(extQuery, pool);
         extQuery.all = extQuery.exec;
 
@@ -158,7 +155,6 @@ module.exports = function (opt) {
 
         extQuery.get = extQuery.getWithin.bind(extQuery, pool);
 
-        
         queryMethods.forEach(function (key) {
             extQuery[key] = function extFn() {
                 var q = query[key].apply(query, arguments);
@@ -185,7 +181,7 @@ module.exports = function (opt) {
     db.functions = sql.functions;
 
     db.close = function() {
-        if (pool) 
+        if (pool)
             pool.close.apply(pool, arguments);
         pool = null;
     };
@@ -195,7 +191,7 @@ module.exports = function (opt) {
         return wrapTransaction(tx);
     }
 
-    db.transaction = function(f) { 
+    db.transaction = function(f) {
         return P.try(function() {
             return wrapTransaction(pool.begin());
         }).then(function(tx) {
@@ -207,7 +203,7 @@ module.exports = function (opt) {
         });
     }
 
-    db.query = function() { 
+    db.query = function() {
         return pool.query.apply(pool, arguments);
     }
 
@@ -225,9 +221,9 @@ module.exports = function (opt) {
         tables.forEach(function(t) {
             if (!(t.__isTable || t.__isSubtable))
                 t = t.table;
-            if (t.__isSubtable) 
+            if (t.__isSubtable)
                 sub[tableName(t)] = true;
-            else 
+            else
                 normal[tableName(t)] = true;
         });
 
@@ -242,25 +238,25 @@ module.exports = function (opt) {
         var ttypes = tableTypes(tables);
         if (ttypes.sub.length > 0 && ttypes.normal.length > 1)
             throw new RangeError(
-                "Only one main table is allowed when selecting subtables, " 
+                "Only one main table is allowed when selecting subtables, "
                + ttypes.normal.length + " found. " + ttypes.normal );
 
         return tables.reduce(function (all, table) {
             var tableName = table.alias || table._name;
-            if (table.columns) 
+            if (table.columns)
                 return all.concat(table.columns.map(function(c) {
                     return c.as(tableName + '.' + columnName(c));
                 }));
             else if (table.aggregate) {
                 var column = table;
                 tableName = column.table.alias || column.table._name;
-                return all.concat([column.as(tableName + '.' 
+                return all.concat([column.as(tableName + '.'
                                              + columnName(column))]);
             } else if (table.aggregator) {
                 var column = table;
                 tableName = column.table.alias || column.table._name;
                 tableName = tableName.split('.').slice(0, -1).join('.');
-                return all.concat([column.as(tableName + '.' 
+                return all.concat([column.as(tableName + '.'
                                              + columnName(column))]);
             }
             else {
@@ -272,25 +268,25 @@ module.exports = function (opt) {
     function wrapTransaction(tx) {
         tx.savepoint = function() {
             var spname = crypto.randomBytes(6).toString('base64');
-            if (dialect == 'mysql') 
+            if (dialect == 'mysql')
                 spname = '`' + spname + '`';
             else
                 spname = '"' + spname + '"';
-            tx.query('SAVEPOINT ' + spname);            
+            tx.query('SAVEPOINT ' + spname);
             function restore(cb) {
-                return tx.query('ROLLBACK TO SAVEPOINT ' + spname, cb); 
+                return tx.query('ROLLBACK TO SAVEPOINT ' + spname, cb);
             }
             function release(cb) {
-                return tx.query('RELEASE SAVEPOINT ' + spname, cb); 
+                return tx.query('RELEASE SAVEPOINT ' + spname, cb);
             }
-            return { 
+            return {
                 __savepoint: true,
-                rollback: restore, 
-                commit: release, 
+                rollback: restore,
+                commit: release,
                 restore: restore,
-                release: release, 
-                query: function() { 
-                    return tx.query.apply(tx, arguments); 
+                release: release,
+                query: function() {
+                    return tx.query.apply(tx, arguments);
                 }
             };
         };
