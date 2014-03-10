@@ -11,13 +11,13 @@ UserAccount.from(
 */
 
 exports.minraw = [
-    { 'id##': 1, 'account.id##': 1, 'account.userAccounts[].id##': 1 },
-    { 'id##': 1, 'account.id##': 1, 'account.userAccounts[].id##': 2 },
+    { 'id##': 1, 'account{}.id##': 1, 'account{}.userAccounts[].id##': 1 },
+    { 'id##': 1, 'account{}.id##': 1, 'account{}.userAccounts[].id##': 2 },
 ];
 
 exports.mininput =[
-    { 'id##': 1, account: {'id##': 1, 'userAccounts[]': {'id##': 1 }}},
-    { 'id##': 1, account: {'id##': 1, 'userAccounts[]': {'id##': 2 }}},
+    { 'id##': 1, 'account{}': {'id##': 1, 'userAccounts[]': {'id##': 1 }}},
+    { 'id##': 1, 'account{}': {'id##': 1, 'userAccounts[]': {'id##': 2 }}},
 ];
 
 exports.minoutput = [
