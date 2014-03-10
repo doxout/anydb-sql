@@ -9,16 +9,16 @@ var path = require('path');
 var util = require('util');
 
 var db = anydbsql({
-  url: 'sqlite3://', 
+  url: 'sqlite3://',
   connections: 1
 });
 
 var post = db.define({
     name: 'posts',
     columns: {
-        'id': {primaryKey: true}, 
-        'title':{}, 
-        'content':{}, 
+        'id': {primaryKey: true},
+        'title':{},
+        'content':{},
         'userId': {}
     },
     has: {'user': {from: 'users'}}
@@ -27,7 +27,7 @@ var post = db.define({
 var user = db.define({
   name: 'users',
   columns: {
-      id: { primaryKey: true }, 
+      id: { primaryKey: true },
       name:{}
   },
   has: {posts: {from: 'posts', many: true}}
@@ -38,7 +38,7 @@ test('anydb-sql', function(t) {
 
   db.query('create table users (id integer primary key, name);\n'
           +'create table posts (id integer primary key, title, content, userId);', function(err) {
-    
+
     t.notOk(err, 'creating table failed: ' + err);
 
     t.test('insert exec', function(t) {
@@ -107,7 +107,7 @@ test('anydb-sql', function(t) {
         .select(userx.id);
 
       query.get(function(err, res) {
-        t.equals(res.id,  1, 'user.id is 1');    
+        t.equals(res.id,  1, 'user.id is 1');
         t.end();
       });
     });
@@ -128,12 +128,14 @@ test('anydb-sql', function(t) {
     });
 
     t.test('selectDeep recognizes non-tables properly', function(t) {
-        var q = user.from(user.join(user.posts)).selectDeep(user.id, user.name, user.posts);
+        var q = user.from(user.join(user.posts))
+            .selectDeep(user.id, user.name, user.posts);
         t.end();
     });
     t.test('selectDeep recognizes tables properly', function(t) {
         try {
-            var q = user.from(user.join(user.posts)).selectDeep(user.id, post, user.posts);
+            var q = user.from(user.join(user.posts))
+                .selectDeep(user.id, post, user.posts);
             t.notOk(true, 'should throw, but did not')
             t.end();
         } catch (e) {

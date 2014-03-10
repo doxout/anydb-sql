@@ -1,15 +1,16 @@
 # anydb-sql
 
-Minimal ORM for mysql, postgresql and sqlite with complete arbitrary SQL query support.
+Minimal ORM for mysql, postgresql and sqlite with complete arbitrary SQL query
+support.
 
-Based on the [node-sql](https://github.com/brianc/node-sql) query builder and 
+Based on the [node-sql](https://github.com/brianc/node-sql) query builder and
 [node-anydb](https://github.com/grncdr/node-any-db) connection pool
 
 # examples and usage:
 
 ## initialization
 
-Initializing an instance also creates a connection pool. The url argument is 
+Initializing an instance also creates a connection pool. The url argument is
 the same as in node-anydb
 
 ```js
@@ -29,8 +30,8 @@ Defining a table is the same as in node-sql:
 var user = db.define({
     name: 'users',
     columns: {
-        id: {primaryKey: true}, 
-        email: {}, 
+        id: {primaryKey: true},
+        email: {},
         password: {}
     }
 });
@@ -38,7 +39,7 @@ var user = db.define({
 
 ### relationships
 
-You can also add properties to the table that are based on relationships 
+You can also add properties to the table that are based on relationships
 between tables by adding a `has` property
 
 ```js
@@ -53,38 +54,38 @@ var user = db.define({
 // user.posts is now a "subtable"
 ```
 
-Read about [joins and subobjects](#joins-and-subobjects) to see how you can 
+Read about [joins and subobjects](#joins-and-subobjects) to see how you can
 use subtables with `selectDeep`
 
 ## extra query methods
 
 Queries have all the methods as in node-sql, plus the additional methods:
 
-* exec(function(err, rows)) - executes the query and calls the callback 
+* exec(function(err, rows)) - executes the query and calls the callback
   with an array of rows
 * all - same as exec
 * get(function(err, row)) - executes the query and returns the first result
 * execWithin(transaction, function(err, rows)) - execute within a transaction
 * allWithin(tx, cb), getWithin(tx, cb) - all/get within a transaction.
-* selectDeep(args) - deeply select join results (with grouping). Arguments can 
+* selectDeep(args) - deeply select join results (with grouping). Arguments can
   be fields, tables or subtables (created with relationships).
   More info in the section [joins and subobjects](#joins-and-subobjects) below.
 
-If you omit the callback from a querying method, a promise will be 
+If you omit the callback from a querying method, a promise will be
 returned instead.
 
-Use regular node-sql queries then chain one of the querying methods at the 
+Use regular node-sql queries then chain one of the querying methods at the
 end:
 
 ```js
 user.where({email: email}).get(function(err, user) {
-  // user.name, 
+  // user.name,
 });
 ```
 
 ## joins and subobjects
 
-Join queries can be constructed using node-sql. The format of the results is 
+Join queries can be constructed using node-sql. The format of the results is
 the same as with anydb
 
 ```js
@@ -96,9 +97,9 @@ user.select(user.name, post.content)
   });
 ```
 
-When creating join queries, you can generate sub-objects in the result by 
+When creating join queries, you can generate sub-objects in the result by
 using `selectDeep`
- 
+
 ```js
 user.from(user.join(post).on(user.id.equals(post.userId)))
   .where(post.date.gt(yesterday))
@@ -129,7 +130,7 @@ user.from(user.join(user.posts).on(
         user.id.equals(user.posts.userId))
     .join(user.posts.comments).on(
         user.posts.id.equals(user.posts.comments.postId))
-    .selectDeep(user.id, user.name, user.posts.id, user.posts.content, 
+    .selectDeep(user.id, user.name, user.posts.id, user.posts.content,
         user.posts.comments).all(function(err, res) {
             // res[0] is
             // {id: id, name: name: posts: [
@@ -137,7 +138,7 @@ user.from(user.join(user.posts).on(
             //     {id: pid, content: content, comments: [commentObj, ...]},
             //     ...
             // ]}
-            
+
         });
 ```
 
@@ -145,7 +146,7 @@ user.from(user.join(user.posts).on(
 
 To create a transaction and execute queries within it, use `db.begin()`
 
-Execute constructed queries within that transaction using `execWithin`, 
+Execute constructed queries within that transaction using `execWithin`,
 `getWithin` or `allWithin`
 
 ```js
@@ -167,7 +168,7 @@ db.transaction(function(tx) { ... })
 and you will get autocommit / autorollback depending on whether the promise
 returned within the passed function is fulfilled or rejected.
 
-Transactions have the same API as anydb tranactions, but they're extended with 
+Transactions have the same API as anydb tranactions, but they're extended with
 the following methods:
 
 ### `tx.savepoint()`
@@ -182,13 +183,13 @@ sp.restore();
 
 ### `tx.logQueries([enable])`
 
-Will cause the queries executed within the transaction to be logged. This 
+Will cause the queries executed within the transaction to be logged. This
 method should be useful for debugging purposes. The parameter is a boolean.
 
 # query building syntax
 
-For more info on how to build queries, look at 
-[the node-sql test samples and their corresponding 
+For more info on how to build queries, look at
+[the node-sql test samples and their corresponding
 SQL](https://github.com/brianc/node-sql/tree/master/test/dialects)
 
 # `db.close`
@@ -210,4 +211,3 @@ db.query(...anydb arguments...)
 # licence
 
 MIT
-
