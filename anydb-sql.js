@@ -212,6 +212,8 @@ module.exports = function (opt) {
         var name = c.alias || c.name;
         if (c.primaryKey && !c.aggregator)
             name = name + '##';
+        else if (c.dataType == 'json')
+            name = name + "##json";
         return name;
     }
 
