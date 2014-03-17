@@ -20,7 +20,7 @@ var grouperData = require('./lib/grouper-data');
 
 
 function groupTest(val, key) {
-    return grouper.isObject(val);
+    return grouper.isObject(val) && !(/##json$/).test(key);
     //return grouper.isObject(val) && !/\!\!$/.test(key);
 }
 
@@ -34,7 +34,7 @@ var group = grouper.group, clean = grouper.clean;
 function grouperTest(desc, inData, outData) {
     t.test(desc, function(t) {
         var grouped = group(inData, groupTest, eqTest);
-        var ungrouped = clean(grouped, /(\[\]|##|\{\})$/);
+        var ungrouped = clean(grouped, /(\[\]|##|\{\}|##json)$/);
         //console.log(util.inspect(ungrouped, false, 5));
         t.deepEquals(ungrouped, outData);
         t.end();
@@ -49,12 +49,14 @@ grouperTest("deep but no nesting of non-groups",
 
 
 var nested = [
-    {'id##': 1, metadata: [{a: 1}, {a: 2}]},
-    {'id##': 2, metadata: [{b: 5}, {b: 8}]}
+    {'id##': 1, 'metadata##json': [{a: 1}, {a: 2}]},
+    {'id##': 2, 'metadata##json': [{b: 5}, {b: 8}]},
+    {'id##': 3, 'metadata##json': [{b: 8}, {b: 7,c:[1,2,3]}]}
 ];
 var nestedOut = [
     {'id': 1, metadata: [{a: 1}, {a: 2}]},
-    {'id': 2, metadata: [{b: 5}, {b: 8}]}
+    {'id': 2, metadata: [{b: 5}, {b: 8}]},
+    {'id': 3, metadata: [{b: 8}, {b: 7,c:[1,2,3]}]}
 ];
 
 
