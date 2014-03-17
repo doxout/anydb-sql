@@ -50,11 +50,13 @@ grouperTest("deep but no nesting of non-groups",
 
 var nested = [
     {'id##': 1, metadata: [{a: 1}, {a: 2}]},
-    {'id##': 2, metadata: [{b: 5}, {b: 8}]}
+    {'id##': 2, metadata: [{b: 5}, {b: 8}]},
+    {'id##': 3, metadata: [{b: 8}, {b: 7,c:[1,2,3]}]},
 ];
 var nestedOut = [
     {'id': 1, metadata: [{a: 1}, {a: 2}]},
-    {'id': 2, metadata: [{b: 5}, {b: 8}]}
+    {'id': 2, metadata: [{b: 5}, {b: 8}]},
+    {'id': 3, metadata: [{b: 8}, {b: 7,c:[1,2,3]}]},
 ];
 
 
