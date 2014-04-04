@@ -1,6 +1,6 @@
 var util = require('util');
 var grouper = require('../lib/grouper');
-var t = require('tap');
+var t = require('tape');
 
 
 t.test('normalizer', function(t) {
