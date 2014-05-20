@@ -152,6 +152,13 @@ test('anydb-sql', function(t) {
       });
     });
 
+    t.test('db.makeFunction', function(t) {
+        var avg = db.makeFunction("AVG");
+        var q = user.select(avg(user.id).as('avgid')).toQuery().text;
+        t.equals(q, 'SELECT AVG("users"."id") AS "avgid" FROM "users"');
+        t.end();
+    });
+
   });
 
 });

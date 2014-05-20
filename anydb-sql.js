@@ -180,6 +180,8 @@ module.exports = function (opt) {
 
     db.functions = sql.functions;
 
+    db.makeFunction = sql.functionCallCreator;
+
     db.close = function() {
         if (pool)
             pool.close.apply(pool, arguments);

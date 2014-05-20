@@ -208,6 +208,20 @@ To execute custom queries, use `db.query`
 db.query(...anydb arguments...)
 ```
 
+# `db.functions` and `db.makeFunction`
+
+`db.makeFunction` allows you to create a new function supported in the database.
+
+`db.functions` contains a couple of predefined, common functions.
+
+Example:
+
+```js
+var max = db.functions.MAX
+var avg = db.makeFunction('AVG');
+var q = user.select(max(user.age).as('maxage'), avg(user.age).as('avgage'));
+```
+
 # licence
 
 MIT
