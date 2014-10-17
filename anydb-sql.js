@@ -9,6 +9,7 @@ var util = require('util');
 var AnyDBPool = require('./lib/anydb-pool');
 var grouper = require('./lib/grouper');
 var savePoint = require('./lib/savepoint');
+var TxMonad = require('./lib/tx-monad');
 
 var queryMethods = [
     'select', 'from', 'insert', 'update',
@@ -142,6 +143,17 @@ module.exports = function (opt) {
         }
 
         extQuery.get = extQuery.getWithin.bind(extQuery, pool);
+
+        extQuery.execTx = function() {
+            var q = self.toQuery();
+            return new TxMonad(q.text, q.values);
+        }
+        extQuery.allTx = extQuery.execTx;
+        extQuery.getTx = function() {
+            return self.execTx().chain(function(rows) {
+                return rows && rows.length ? rows[0] : null;
+            });
+        }
 
         queryMethods.forEach(function (key) {
             extQuery[key] = function extFn() {

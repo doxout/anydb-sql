@@ -32,13 +32,13 @@ t.test('chain', function(t) {
         });
     }).chain(function(result) {
         assert.equal(result[0], "Test 4")
-        return query("Test 5", []);
+        return "Test 5"
+    }).chain(function(result) {
+        assert.equal(result, "Test 5", "should pass-through");
     });
 
 
-    return chainOfQueries.runWithin(makeTx("LolTx")).then(function(res) {
-        console.log(res);
-    });
+    return chainOfQueries.runWithin(makeTx("LolTx"));
 });
 
 //----------------------------------------------------------------------
