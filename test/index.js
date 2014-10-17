@@ -1,4 +1,4 @@
-var test = require('tape').test;
+var test = require('blue-tape').test;
 
 var anydbsql = require('../anydb-sql');
 
@@ -76,6 +76,7 @@ test('anydb-sql', function(t) {
                 return true;
             });
         }).done(null, function(e) {
+            console.error(e.stack)
             t.notOk(e, 'db.transaction should not throw');
             t.end();
         })

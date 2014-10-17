@@ -1,11 +1,14 @@
-var anyDB = require('any-db');
+
 var sql = require('sql');
 var url = require('url');
-var grouper = require('./lib/grouper');
 var EventEmitter = require('events').EventEmitter;
 var crypto = require('crypto');
 var P = require('bluebird');
 var util = require('util');
+
+var AnyDBPool = require('./lib/anydb-pool');
+var grouper = require('./lib/grouper');
+var savePoint = require('./lib/savepoint');
 
 var queryMethods = [
     'select', 'from', 'insert', 'update',
@@ -20,20 +23,6 @@ function extractDialect(adr) {
     if (dialect == 'sqlite3')
         dialect = 'sqlite';
     return dialect;
-}
-
-function wrapQuery(ctx) {
-    if (ctx._wrapquery) return ctx;
-    var res = ctx;
-    res._wrapquery = true;
-    if (typeof(res.queryAsync) !== 'function') {
-        if (!res.queryAsync)
-            if (res._mainpool || res._transaction)
-                P.promisifyAll(Object.getPrototypeOf(res));
-            else
-                P.promisifyAll(res);
-    }
-    return res;
 }
 
 module.exports = function (opt) {
@@ -55,10 +44,9 @@ module.exports = function (opt) {
             }
         }
         else {
-            pool = anyDB.createPool(opt.url, opt.connections);
+            pool = new AnyDBPool(opt.url, opt.connections);
         }
         pool._mainpool = true;
-        pool = wrapQuery(pool);
     }
 
     db.open();
@@ -183,8 +171,7 @@ module.exports = function (opt) {
     db.makeFunction = sql.functionCallCreator;
 
     db.close = function() {
-        if (pool)
-            pool.close.apply(pool, arguments);
+        if (pool) pool.close.apply(pool, arguments);
         pool = null;
     };
 
@@ -268,58 +255,15 @@ module.exports = function (opt) {
     };
 
     function wrapTransaction(tx) {
-        tx.savepoint = function() {
-            var spname = crypto.randomBytes(6).toString('base64');
-            if (dialect == 'mysql')
-                spname = '`' + spname + '`';
-            else
-                spname = '"' + spname + '"';
-            tx.query('SAVEPOINT ' + spname);
-            function restore(cb) {
-                return tx.query('ROLLBACK TO SAVEPOINT ' + spname, cb);
-            }
-            function release(cb) {
-                return tx.query('RELEASE SAVEPOINT ' + spname, cb);
-            }
-            return {
-                __savepoint: true,
-                rollback: restore,
-                commit: release,
-                restore: restore,
-                release: release,
-                query: function() {
-                    return tx.query.apply(tx, arguments);
-                }
-            };
-        };
+        tx.savepoint = savePoint(dialect);
         tx.__transaction = true;
         tx.logQueries = function(enabled) {
             tx._logQueries = enabled;
         }
-        return wrapQuery(tx);
+        return tx;
     }
 
-    var oldpool;
-
-    db.test = {
-        end:  function() {
-            if (pool.rollback) {
-                pool.rollback();
-                pool = oldpool;
-            }
-        }, begin: function() {
-            if (!pool) db.open();
-            if (!pool.rollback) {
-                oldpool = pool;
-                pool = db.begin();
-                pool.begin = pool.savepoint
-            }
-        }
-    };
-
-    db.getPool = function() {
-        return pool;
-    };
+    db.getPool = function() { return pool; };
 
     return db;
 
