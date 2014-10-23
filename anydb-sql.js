@@ -207,7 +207,9 @@ module.exports = function (opt) {
     db.query = function() {
         return pool.query.apply(pool, arguments);
     }
-
+    db.queryAsync = function() {
+        return pool.queryAsync.apply(pool, arguments);
+    }
 
     function columnName(c) {
         var name = c.alias || c.name;

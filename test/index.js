@@ -144,7 +144,12 @@ test('anydb-sql', function(t) {
             t.end();
         }
     });
-
+    t.test('db.queryAsync', function(t) {
+        db.queryAsync('select * from users').then(function(results) {
+            t.ok(results.rows, 'should return some rows');
+            t.end();
+        });
+    })
     t.test('db.close', function(t) {
       t.plan(1);
       db.close(function(err) {
@@ -159,6 +164,8 @@ test('anydb-sql', function(t) {
         t.equals(q, 'SELECT AVG("users"."id") AS "avgid" FROM "users"');
         t.end();
     });
+
+
 
   });
 
