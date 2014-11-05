@@ -199,7 +199,9 @@ module.exports = function (opt) {
             return P.try(f, tx).then(function(res) {
                 return tx.commitAsync().thenReturn(res);
             }, function(err) {
-                return tx.rollbackAsync().thenThrow(err);
+                return tx.rollbackAsync()
+                    .catch(function() { })
+                    .thenThrow(err)
             });
         });
     }
