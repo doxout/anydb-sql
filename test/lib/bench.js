@@ -16,7 +16,7 @@ var depthData = [];
 
 var dirtyData = [];
 
-var NUM = 10;
+var NUM = process.env.NUM | 10;
 
 for (var k = 0; k < NUM; ++k) {
     cleanData.push({id: k, name: 'name'+k, age: k*2, content: 'abc'});
@@ -38,21 +38,22 @@ function testWith(tag, data, dur) {
     // Default rows = 10
     var nnum = data.length;
     for (;;) {
-        if (++k*NUM > 500) { 
-            k = 1; 
+        if (++k*NUM > 1000) { 
+            k = 1;
             if (Date.now() - t > dur) break;
         }
         test(data);
         ++n;
     }
-    console.log(tag, (nnum * n / (Date.now() - t)).toFixed(0), 'rows/ms');
+    var qpms = n / (Date.now() - t);
+    console.log(tag, (nnum * qpms).toFixed(0), 'rows/ms', qpms.toFixed(0), "queries/ms");
 }
 
 
 
-testWith('full', data.raw, 3000);
-testWith('clean', cleanData, 3000);
-testWith('depth', depthData, 3000);
-testWith('dirty', dirtyData, 3000);
+//testWith('full', data.raw, 3000);
+//testWith('clean', cleanData, 3000);
+//testWith('depth', depthData, 3000);
+testWith('dirty', dirtyData, 5000);
 
 }());

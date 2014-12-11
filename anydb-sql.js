@@ -14,7 +14,8 @@ var TxMonad = require('./lib/tx-monad');
 var queryMethods = [
     'select', 'from', 'insert', 'update',
     'delete', 'create', 'drop', 'alter', 'where',
-    'indexes'
+    'indexes', 'ifNotExists',
+    'addColumn', 'dropColumn', 'renameColumn', 'rename'
 ];
 
 
@@ -116,7 +117,7 @@ module.exports = function (opt) {
             }
             var query = self.toQuery(); // {text, params}
 
-            var resPromise = where.queryAsync(query.text, query.values);
+            var resPromise = where.queryAsync(query);
             return resPromise.then(function (res) {
                 if (where._logQueries) {
                     console.log("anydb-sql query complete: `" + query.text

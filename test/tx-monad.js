@@ -74,3 +74,12 @@ t.test('catch', function(t) {
         t.ok(res[0] === 'ok', "We are done");
     });
 });
+
+
+t.test('unit', function(t) {
+    return TxMonad.unit(5).chain(function(val) {
+        return query("testing the unit method", ['arg']);
+    }).runWithin(makeTx("Tx4")).then(function(res) {
+        t.ok(res[0] == "testing the unit method", "tx propagated");
+    });
+});
