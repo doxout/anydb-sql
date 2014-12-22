@@ -82,8 +82,12 @@ declare module "anydb-sql" {
         interface CreateQuery extends Executable<void> {
             ifNotExists():Executable<void>
         }
+        interface DropQuery extends Executable<void> {
+            ifExists():Executable<void>
+        }
         export interface Table<T> extends TableNode, Queryable<T> {
             create():CreateQuery
+            drop():DropQuery
             as(name:string):Table<T>
             update(o:any):ModifyingQuery
             insert(row:T):ModifyingQuery
