@@ -1,4 +1,3 @@
-
 var sql = require('sql');
 var url = require('url');
 var EventEmitter = require('events').EventEmitter;
