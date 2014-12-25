@@ -2,6 +2,12 @@
 declare module "anydb-sql" {
     import Promise = require('bluebird');
 
+    class AnyDBPool {
+        query:(text:string, values:any[], callback:(err:Error, result:any)=>void)=>void
+        begin:()=>anydbSQL.Transaction
+        close:(err:Error)=>void
+    }
+
     module anydbSQL {
         export interface OrderByValueNode {}
         export interface ColumnDefinition {
@@ -161,6 +167,7 @@ declare module "anydb-sql" {
             begin():Transaction
             open():void;
             close():void;
+            getPool():AnyDBPool;
         }
     }
 
