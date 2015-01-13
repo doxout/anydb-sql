@@ -26,6 +26,7 @@ declare module "anydb-sql" {
         export interface QueryLike {
             query:string;
             values: any[]
+            text:string
         }
         export interface DatabaseConnection {
             queryAsync<T>(query:string, ...params:any[]):Promise<{rowCount:number;rows:T[]}>
