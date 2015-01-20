@@ -48,11 +48,11 @@ declare module "anydb-sql" {
 
         interface Executable<T> {
             get():Promise<T>
-            getWithin(tx:Transaction):Promise<T>
+            getWithin(tx:DatabaseConnection):Promise<T>
             exec():Promise<void>
             all():Promise<T[]>
-            execWithin(tx:Transaction):Promise<void> 
-            allWithin(tx:Transaction):Promise<T[]>
+            execWithin(tx:DatabaseConnection):Promise<void> 
+            allWithin(tx:DatabaseConnection):Promise<T[]>
             toQuery():QueryLike;
         }
 
