@@ -110,6 +110,8 @@ module.exports = function (opt) {
         self.__extQuery = true;
 
         extQuery.execWithin = function (where, fn) {
+            var estack;
+            if (where._logQueries) estack = new Error();
             if (!where || !where.queryAsync) {
                 console.error(where);
                 throw new Error("query: Cannot execWithin " + where);
@@ -120,14 +122,18 @@ module.exports = function (opt) {
             return resPromise.then(function (res) {
                 if (where._logQueries) {
                     console.log("anydb-sql query complete: `" + query.text
-                                + "` with params", query.values);
+                                + "` with params", query.values, 
+                                "in tx", where._id,
+                                "at stack\n", estack.stack.split('\n').slice(2,7).join('\n'))
+
                 }
                 return res && res.rows ? grouper.process(res.rows) : null;
             }, function(err) {
                 err = new Error(err);
-                err.message = err.message.substr('Error  '.length)
-                    + ' in query `' + query.text
-                    + '` with params ' + JSON.stringify(query.values);
+                err.message = err.message
+                    + ' in query `' + query.text + '`'
+                    + ' in tx ' + where._id
+                    + ' with params ' + JSON.stringify(query.values);
                 throw err;
             }).nodeify(fn);
         };
@@ -197,8 +203,12 @@ module.exports = function (opt) {
             return wrapTransaction(pool.begin());
         }).then(function(tx) {
             return P.try(f, tx).then(function(res) {
+                if (tx._logQueries)
+                    console.log("Commiting tx", tx._id, res);
                 return tx.commitAsync().thenReturn(res);
             }, function(err) {
+                if (tx._logQueries)
+                    console.error("Error in tx", tx._id);
                 return tx.rollbackAsync()
                     .catch(function() { })
                     .thenThrow(err)
@@ -270,7 +280,9 @@ module.exports = function (opt) {
         }, []);
     };
 
+    var txid = 0;
     function wrapTransaction(tx) {
+        tx._id = ++txid;
         tx.savepoint = savePoint(dialect);
         tx.__transaction = true;
         tx.logQueries = function(enabled) {
