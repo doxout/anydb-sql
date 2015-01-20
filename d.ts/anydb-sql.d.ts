@@ -2,7 +2,7 @@
 declare module "anydb-sql" {
     import Promise = require('bluebird');
 
-    class AnyDBPool {
+    interface AnyDBPool extends anydbSQL.DatabaseConnection {
         query:(text:string, values:any[], callback:(err:Error, result:any)=>void)=>void
         begin:()=>anydbSQL.Transaction
         close:(err:Error)=>void
