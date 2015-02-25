@@ -1,9 +1,7 @@
 var sql = require('sql');
 var url = require('url');
 var EventEmitter = require('events').EventEmitter;
-var crypto = require('crypto');
 var P = require('bluebird');
-var util = require('util');
 
 var AnyDBPool = require('./lib/anydb-pool');
 var grouper = require('./lib/grouper');
@@ -27,7 +25,6 @@ function extractDialect(adr) {
 }
 
 module.exports = function (opt) {
-
     var pool,
         db = {},
         dialect = extractDialect(opt.url);
@@ -111,11 +108,11 @@ module.exports = function (opt) {
 
         extQuery.execWithin = function (where, fn) {
             var estack;
-            if (where._logQueries) estack = new Error();
             if (!where || !where.queryAsync) {
                 console.error(where);
                 throw new Error("query: Cannot execWithin " + where);
             }
+            if (where._logQueries) estack = new Error();
             var query = self.toQuery(); // {text, params}
 
             var resPromise = where.queryAsync(query);
@@ -146,20 +143,20 @@ module.exports = function (opt) {
             return q.then(function(rows) {
                return rows && rows.length ? rows[0] : null;
             }).nodeify(fn);
-        }
+        };
 
         extQuery.get = extQuery.getWithin.bind(extQuery, pool);
 
         extQuery.execTx = function() {
             var q = self.toQuery();
             return new TxMonad(q.text, q.values);
-        }
+        };
         extQuery.allTx = extQuery.execTx;
         extQuery.getTx = function() {
             return self.execTx().chain(function(rows) {
                 return rows && rows.length ? rows[0] : null;
             });
-        }
+        };
 
         queryMethods.forEach(function (key) {
             extQuery[key] = function extFn() {
@@ -196,7 +193,7 @@ module.exports = function (opt) {
     db.begin = function() {
         var tx = pool.begin();
         return wrapTransaction(tx);
-    }
+    };
 
     db.transaction = function(f) {
         return P.try(function() {
@@ -214,14 +211,14 @@ module.exports = function (opt) {
                     .thenThrow(err)
             });
         });
-    }
+    };
 
     db.query = function() {
         return pool.query.apply(pool, arguments);
-    }
+    };
     db.queryAsync = function() {
         return pool.queryAsync.apply(pool, arguments);
-    }
+    };
 
     function columnName(c) {
         var name = c.alias || c.name;
@@ -287,7 +284,7 @@ module.exports = function (opt) {
         tx.__transaction = true;
         tx.logQueries = function(enabled) {
             tx._logQueries = enabled;
-        }
+        };
         return tx;
     }
 
