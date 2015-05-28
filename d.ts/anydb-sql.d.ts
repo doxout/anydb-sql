@@ -69,6 +69,7 @@ declare module "anydb-sql" {
             update(o:{}):ModifyingQuery
             group(...nodes:any[]):Query<T>
             order(...criteria:OrderByValueNode[]):Query<T>
+            limit(l:number):Query<T>
         }
 
         export interface ModifyingQuery extends Executable<void> {
