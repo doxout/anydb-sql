@@ -9,13 +9,6 @@ declare module "anydb-sql" {
     }
 
     module anydbSQL {
-        export enum Dialect {
-            Postgres = <any>"postgres",
-            MySQL = <any>"mysql",
-            SQLite = <any>"sqlite",
-            MSSQL = <any>"mssql"
-        }
-
         export interface OrderByValueNode {}
         export interface ColumnDefinition {
             primaryKey?:boolean;
@@ -177,7 +170,7 @@ declare module "anydb-sql" {
             open():void;
             close():void;
             getPool():AnyDBPool;
-            dialect():Dialect;
+            dialect():string;
         }
     }
 
