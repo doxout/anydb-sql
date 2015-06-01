@@ -45,7 +45,7 @@ module.exports = function (opt) {
             pool = new AnyDBPool(opt.url, opt.connections);
         }
         pool._mainpool = true;
-    }
+    };
 
     db.open();
     db.models = {};
@@ -290,7 +290,8 @@ module.exports = function (opt) {
 
     db.getPool = function() { return pool; };
 
+    db.dialect = function() { return dialect; };
+
     return db;
 
 };
-

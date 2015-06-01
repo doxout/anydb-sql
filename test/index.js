@@ -76,7 +76,7 @@ test('anydb-sql', function(t) {
                 return true;
             });
         }).done(null, function(e) {
-            console.error(e.stack)
+            console.error(e.stack);
             t.notOk(e, 'db.transaction should not throw');
             t.end();
         })
