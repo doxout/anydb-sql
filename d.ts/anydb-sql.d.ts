@@ -141,6 +141,8 @@ declare module "anydb-sql" {
             notEquals(node:any):BinaryNode
             gte(node:any):BinaryNode
             lte(node:any):BinaryNode
+            gt(node:any):BinaryNode
+            lt(node:any):BinaryNode
             like(str:string):BinaryNode
             multiply:{
                 (node:Column<T>):Column<T>
