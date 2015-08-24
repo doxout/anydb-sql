@@ -44,6 +44,7 @@ declare module "anydb-sql" {
             from(table:TableNode):SubQuery<T>
             group(...nodes:any[]):SubQuery<T>
             order(criteria:OrderByValueNode):SubQuery<T>
+            notExists(subQuery:SubQuery<any>):SubQuery<T>
         }
 
         interface Executable<T> {
