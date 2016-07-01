@@ -119,7 +119,7 @@ declare module "anydb-sql" {
         export interface AlterQuery<T> extends Executable<void> {
             addColumn(column:Column<any>): AlterQuery<T>;
             addColumn(name: string, options:string): AlterQuery<T>;
-            dropColumn(column: Column<any>): AlterQuery<T>;
+            dropColumn(column: Column<any>|string): AlterQuery<T>;
             renameColumn(column: Column<any>, newColumn: Column<any>):AlterQuery<T>;
             renameColumn(column: Column<any>, newName: string):AlterQuery<T>;
             renameColumn(name: string, newName: string):AlterQuery<T>;
@@ -163,6 +163,7 @@ declare module "anydb-sql" {
             descending:OrderByValueNode
             asc:OrderByValueNode
             desc:OrderByValueNode
+            name: string;
         }
 
         export interface AnydbSql extends DatabaseConnection {
