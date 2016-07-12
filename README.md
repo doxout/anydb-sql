@@ -57,9 +57,14 @@ var user = db.define({
 Read about [joins and subobjects](#joins-and-subobjects) to see how you can
 use subtables with `selectDeep`
 
-## extra query methods
+## writing queries
 
-Queries have all the methods as in node-sql, plus the additional methods:
+See [node-sql-examples](http://node-sql-examples.github.io/) for searchable list
+of example SQL queries.
+
+## executing queries and selecting complex structures:
+
+Once a query is built, you can use the following methods:
 
 * exec(function(err, rows)) - executes the query and calls the callback
   with an array of rows
