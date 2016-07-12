@@ -16,7 +16,6 @@ declare module "anydb-sql" {
             references?: {table:string; column: string}
             notNull?:boolean
             unique?:boolean
-            default?: any;
         }
 
         export interface TableDefinition {
