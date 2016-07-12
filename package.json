@@ -1,6 +1,6 @@
 {
   "name": "anydb-sql",
-  "version": "0.6.43",
+  "version": "0.6.44",
   "description": "Minimal ORM for mysql, postgresql and sqlite with complete arbitrary SQL query support (based on brianc's query builder sql)",
   "main": "anydb-sql.js",
   "scripts": {
