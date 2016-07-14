@@ -10,6 +10,7 @@
     "type": "git",
     "url": "git://github.com/doxout/anydb-sql.git"
   },
+  "typings": "./d.ts/anydb-sql-commonjs.d.ts",
   "author": "spion",
   "license": "MIT",
   "readmeFilename": "README.md",
@@ -40,6 +41,6 @@
   },
   "devDependencies": {
     "blue-tape": "^0.1.7",
-    "sqlite3": "~2.1.10"
+    "sqlite3": "3.x"
   }
 }
