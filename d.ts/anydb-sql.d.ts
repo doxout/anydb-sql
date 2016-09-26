@@ -70,6 +70,7 @@ declare module "anydb-sql" {
 
         export interface Query<T> extends Executable<T>, Queryable<T> {
             from(table:TableNode):Query<T>
+            from(statement:string):Query<T>
             update(o:Dictionary<any>):ModifyingQuery
             update(o:{}):ModifyingQuery
             group(...nodes:any[]):Query<T>
