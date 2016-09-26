@@ -44,6 +44,7 @@ declare module "anydb-sql" {
             select(node:Column<T>):SubQuery<T>
             where(...nodes:any[]):SubQuery<T>
             from(table:TableNode):SubQuery<T>
+            from(statement:string):SubQuery<T>
             group(...nodes:any[]):SubQuery<T>
             order(criteria:OrderByValueNode):SubQuery<T>
             exists():BinaryNode
@@ -108,6 +109,7 @@ declare module "anydb-sql" {
             select():Query<T>
             select<U>(...nodes:any[]):Query<U>
             from<U>(table:TableNode):Query<U>
+            from<U>(statement:string):Query<U>
             star():Column<any>
             subQuery<U>():SubQuery<U>
             eventEmitter:{emit:(type:string, ...args:any[])=>void
