@@ -42,12 +42,14 @@ declare module "anydb-sql" {
 
         export interface SubQuery<T> {
             select(node:Column<T>):SubQuery<T>
+            select(...nodes: any[]):SubQuery<T>
             where(...nodes:any[]):SubQuery<T>
             from(table:TableNode):SubQuery<T>
             from(statement:string):SubQuery<T>
             group(...nodes:any[]):SubQuery<T>
             order(criteria:OrderByValueNode):SubQuery<T>
             exists():BinaryNode
+            notExists(): BinaryNode;
             notExists(subQuery:SubQuery<any>):BinaryNode
         }
 
