@@ -119,7 +119,8 @@ declare module "anydb-sql" {
                           on:(eventName:string, handler:Function)=>void}
             columns:Column<any>[]
             sql: SQL;
-            alter():AlterQuery<T>
+            alter():AlterQuery<T>;
+            indexes(): IndexQuery;
         }
         export interface AlterQuery<T> extends Executable<void> {
             addColumn(column:Column<any>): AlterQuery<T>;
@@ -130,6 +131,20 @@ declare module "anydb-sql" {
             renameColumn(name: string, newName: string):AlterQuery<T>;
             rename(newName: string): AlterQuery<T>
         }
+        export interface IndexQuery {
+            create(): IndexCreationQuery;
+            create(indexName: string): IndexCreationQuery;
+            drop(indexName: string): Executable<void>;
+            drop(...columns: Column<any>[]): Executable<void>
+        }
+        export interface IndexCreationQuery extends Executable<void> {
+            unique(): IndexCreationQuery;
+            using(name: string): IndexCreationQuery;
+            on(...columns: (Column<any>|OrderByValueNode)[]): IndexCreationQuery;
+            withParser(parserName: string): IndexCreationQuery;
+            fulltext(): IndexCreationQuery;
+            spatial(): IndexCreationQuery;
+        } 
 
         export interface SQL {
             functions: {
