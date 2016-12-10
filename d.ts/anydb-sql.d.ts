@@ -10,20 +10,24 @@ declare module "anydb-sql" {
 
     module anydbSQL {
         export interface OrderByValueNode {}
-        export interface ColumnDefinition {
+
+        interface Named<Name extends string> {
+            name?: Name;
+        }
+        export interface ColumnDefinition<Name extends string, Type> extends Named<Name> {
             primaryKey?:boolean;
             dataType?:string;
             references?: {table:string; column: string}
             notNull?:boolean
             unique?:boolean
+            defaultValue?: Type
         }
 
-        export interface TableDefinition {
-            name:string
-            columns:Dictionary<ColumnDefinition>
-            has?:Dictionary<{from:string; many?:boolean}>
+        export interface TableDefinition<Name extends string, Row> {
+            name: Name
+            columns:{[CName in keyof Row]: ColumnDefinition<CName, Row[CName]>}
+            has?:{[key: string]:{from:string; many?:boolean}}
         }
-
 
         export interface QueryLike {
             query:string;
@@ -40,8 +44,53 @@ declare module "anydb-sql" {
             commitAsync():Promise<void>
         }
 
+        interface Executable<T> {
+            get():Promise<T>
+            getWithin(tx:DatabaseConnection):Promise<T>
+            exec():Promise<void>
+            all():Promise<T[]>
+            execWithin(tx:DatabaseConnection):Promise<void>
+            allWithin(tx:DatabaseConnection):Promise<T[]>
+            toQuery():QueryLike;
+        }
+
+        interface Queryable<T> {
+            where(...nodes:any[]):Query<T>
+            delete():ModifyingQuery
+            select<N1 extends string, T1>(n1: Column<N1, T1>):Query<T1>
+            select<N1 extends string, T1, N2 extends string, T2>(
+                n1: Column<N1, T1>,
+                n2: Column<N2, T2>):Query<{[N in N1]: T1} & {[N in N2]: T2}>
+            select<N1 extends string, T1, N2 extends string, T2, N3 extends string, T3>(
+                n1: Column<N1, T1>,
+                n2: Column<N2, T2>,
+                n3: Column<N3, T3>):Query<{[N in N1]: T1} & {[N in N2]: T2} & {[N in N3]: T3}>
+            select<U>(...nodesOrTables:any[]):Query<U>
+
+            selectDeep<N1 extends string, T1>(n1: Table<N1, T1>):Query<T1>
+            selectDeep<N1 extends string, T1, N2 extends string, T2>(
+                n1: Table<N1, T1>,
+                n2: Table<N2, T2>):Query<{[N in N1]: T1} & {[N in N2]: T2}>
+            selectDeep<N1 extends string, T1, N2 extends string, T2, N3 extends string, T3>(
+                n1: Table<N1, T1>,
+                n2: Table<N2, T2>,
+                n3: Table<N3, T3>):Query<{[N in N1]: T1} & {[N in N2]: T2} & {[N in N3]: T3}>
+            //selectDeep<U>(...nodesOrTables:any[]):Query<U>
+        }
+
+        export interface Query<T> extends Executable<T>, Queryable<T> {
+            from(table:TableNode):Query<T>
+            from(statement:string):Query<T>
+            update(o:{[key: string]:any}):ModifyingQuery
+            update(o:{}):ModifyingQuery
+            group(...nodes:any[]):Query<T>
+            order(...criteria:OrderByValueNode[]):Query<T>
+            limit(l:number):Query<T>
+            offset(o:number):Query<T>
+        }
+
         export interface SubQuery<T> {
-            select(node:Column<T>):SubQuery<T>
+            select<Name>(node:Column<Name, T>):SubQuery<T>
             select(...nodes: any[]):SubQuery<T>
             where(...nodes:any[]):SubQuery<T>
             from(table:TableNode):SubQuery<T>
@@ -53,33 +102,6 @@ declare module "anydb-sql" {
             notExists(subQuery:SubQuery<any>):BinaryNode
         }
 
-        interface Executable<T> {
-            get():Promise<T>
-            getWithin(tx:DatabaseConnection):Promise<T>
-            exec():Promise<void>
-            all():Promise<T[]>
-            execWithin(tx:DatabaseConnection):Promise<void> 
-            allWithin(tx:DatabaseConnection):Promise<T[]>
-            toQuery():QueryLike;
-        }
-
-        interface Queryable<T> {
-            where(...nodes:any[]):Query<T>
-            delete():ModifyingQuery
-            select<U>(...nodes:any[]):Query<U>
-            selectDeep<U>(...nodesOrTables:any[]):Query<U>
-        }
-
-        export interface Query<T> extends Executable<T>, Queryable<T> {
-            from(table:TableNode):Query<T>
-            from(statement:string):Query<T>
-            update(o:Dictionary<any>):ModifyingQuery
-            update(o:{}):ModifyingQuery
-            group(...nodes:any[]):Query<T>
-            order(...criteria:OrderByValueNode[]):Query<T>
-            limit(l:number):Query<T>
-            offset(o:number):Query<T>
-        }
 
         export interface ModifyingQuery extends Executable<void> {
             returning<U>(...nodes:any[]):Query<U>
@@ -102,10 +124,15 @@ declare module "anydb-sql" {
         interface DropQuery extends Executable<void> {
             ifExists():Executable<void>
         }
-        export interface Table<T> extends TableNode, Queryable<T> {
+
+        type Columns<T> = {
+            [Name in keyof T]: Column<Name, T[Name]>
+        }
+        type Table<Name extends string, T> = TableNode & Queryable<T> & Named<Name> & Columns<T> & {
+
             create():CreateQuery
             drop():DropQuery
-            as(name:string):Table<T>
+            as<OtherName extends string>(name:OtherName):Table<OtherName, T>
             update(o:any):ModifyingQuery
             insert(row:T):ModifyingQuery
             insert(rows:T[]):ModifyingQuery
@@ -113,21 +140,24 @@ declare module "anydb-sql" {
             select<U>(...nodes:any[]):Query<U>
             from<U>(table:TableNode):Query<U>
             from<U>(statement:string):Query<U>
-            star():Column<any>
+            star():Column<void, void>
             subQuery<U>():SubQuery<U>
             eventEmitter:{emit:(type:string, ...args:any[])=>void
                           on:(eventName:string, handler:Function)=>void}
-            columns:Column<any>[]
+            columns:Column<void, void>[]
             sql: SQL;
             alter():AlterQuery<T>;
             indexes(): IndexQuery;
         }
+
+        type Selectable<Name extends string, T> = Table<Name, T> | Column<Name, T>
+
         export interface AlterQuery<T> extends Executable<void> {
-            addColumn(column:Column<any>): AlterQuery<T>;
+            addColumn(column:Column<any, any>): AlterQuery<T>;
             addColumn(name: string, options:string): AlterQuery<T>;
-            dropColumn(column: Column<any>|string): AlterQuery<T>;
-            renameColumn(column: Column<any>, newColumn: Column<any>):AlterQuery<T>;
-            renameColumn(column: Column<any>, newName: string):AlterQuery<T>;
+            dropColumn(column: Column<any, any>|string): AlterQuery<T>;
+            renameColumn(column: Column<any, any>, newColumn: Column<any, any>):AlterQuery<T>;
+            renameColumn(column: Column<any, any>, newName: string):AlterQuery<T>;
             renameColumn(name: string, newName: string):AlterQuery<T>;
             rename(newName: string): AlterQuery<T>
         }
@@ -135,20 +165,20 @@ declare module "anydb-sql" {
             create(): IndexCreationQuery;
             create(indexName: string): IndexCreationQuery;
             drop(indexName: string): Executable<void>;
-            drop(...columns: Column<any>[]): Executable<void>
+            drop(...columns: Column<any, any>[]): Executable<void>
         }
         export interface IndexCreationQuery extends Executable<void> {
             unique(): IndexCreationQuery;
             using(name: string): IndexCreationQuery;
-            on(...columns: (Column<any>|OrderByValueNode)[]): IndexCreationQuery;
+            on(...columns: (Column<any, any>|OrderByValueNode)[]): IndexCreationQuery;
             withParser(parserName: string): IndexCreationQuery;
             fulltext(): IndexCreationQuery;
             spatial(): IndexCreationQuery;
-        } 
+        }
 
         export interface SQL {
             functions: {
-                LOWER(c:Column<string>):Column<string>
+                LOWER<Name>(c:Column<Name, string>):Column<Name, string>
             }
         }
 
@@ -157,7 +187,8 @@ declare module "anydb-sql" {
             or(node:BinaryNode):BinaryNode
         }
 
-        export interface Column<T> {
+        export interface Column<Name, T> {
+            name: Name
             in(arr:T[]):BinaryNode
             in(subQuery:SubQuery<T>):BinaryNode
             notIn(arr:T[]):BinaryNode
@@ -169,30 +200,30 @@ declare module "anydb-sql" {
             lt(node:any):BinaryNode
             like(str:string):BinaryNode
             multiply:{
-                (node:Column<T>):Column<T>
-                (n:number):Column<number>
+                (node:Column<any, T>):Column<any, T>
+                (n:number):Column<any, number> //todo check column names
             }
             isNull():BinaryNode
             isNotNull():BinaryNode
-            sum():Column<number>
-            count():Column<number>
-            count(name:string):Column<number>
-            distinct():Column<T>
-            as(name:string):Column<T>
+            //todo check column names
+            sum():Column<any, number>
+            count():Column<any, number>
+            count(name:string):Column<any, number>
+            distinct():Column<Name, T>
+            as<OtherName>(name:OtherName):Column<OtherName, T>
             ascending:OrderByValueNode
             descending:OrderByValueNode
             asc:OrderByValueNode
             desc:OrderByValueNode
-            name: string;
         }
 
         export interface AnydbSql extends DatabaseConnection {
-            define<T>(map:TableDefinition):Table<T>;
+            define<Name extends string, T>(map:TableDefinition<Name, T>):Table<Name, T>;
             transaction<T>(fn:(tx:Transaction)=>Promise<T>):Promise<T>
-            allOf(...tables:Table<any>[]):any
-            models:Dictionary<Table<any>>
-            functions:{LOWER:(name:Column<string>)=>Column<string>
-                       RTRIM:(name:Column<string>)=>Column<string>}
+            allOf(...tables:Table<any, any>[]):any
+            models: {[key:string]: Table<any, any>}
+            functions:{LOWER:<Name>(name:Column<Name, string>)=>Column<Name, string>
+                       RTRIM:<Name>(name:Column<Name, string>)=>Column<Name, string>}
             makeFunction(name:string):Function
             begin():Transaction
             open():void;

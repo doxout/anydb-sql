@@ -40,6 +40,7 @@
     "sql": "^0.45.3"
   },
   "devDependencies": {
+    "@types/bluebird": "^3.0.36",
     "blue-tape": "^0.1.7",
     "sqlite3": "3.x"
   }
