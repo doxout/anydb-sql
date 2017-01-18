@@ -121,6 +121,8 @@ declare module "anydb-sql" {
             sql: SQL;
             alter():AlterQuery<T>;
             indexes(): IndexQuery;
+
+            _name: string;
         }
         export interface AlterQuery<T> extends Executable<void> {
             addColumn(column:Column<any>): AlterQuery<T>;
@@ -184,6 +186,8 @@ declare module "anydb-sql" {
             asc:OrderByValueNode
             desc:OrderByValueNode
             name: string;
+
+            table: Table<any>;
         }
 
         export interface AnydbSql extends DatabaseConnection {
