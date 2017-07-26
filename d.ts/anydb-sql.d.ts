@@ -8,6 +8,21 @@ declare module "anydb-sql" {
         close:(err:Error)=>void
     }
 
+    interface IndexEntry {
+        Table: string;
+        Non_unique: boolean;
+        Key_name: string;
+        Seq_in_index: number;
+        Column_name: string;
+        Collation: string;
+        Cardinality: number;
+        Sub_part: string;
+        Packed: boolean;
+        Index_type: string;
+        Comment: string;
+        Index_comment: string;
+    }
+
     module anydbSQL {
         export interface OrderByValueNode {}
         export interface ColumnDefinition {
@@ -133,7 +148,7 @@ declare module "anydb-sql" {
             renameColumn(name: string, newName: string):AlterQuery<T>;
             rename(newName: string): AlterQuery<T>
         }
-        export interface IndexQuery {
+        export interface IndexQuery extends Executable<IndexEntry> {
             create(): IndexCreationQuery;
             create(indexName: string): IndexCreationQuery;
             drop(indexName: string): Executable<void>;

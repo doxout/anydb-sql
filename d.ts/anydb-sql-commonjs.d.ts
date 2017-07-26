@@ -26,6 +26,21 @@ declare module anydbSQL {
         has?:Dictionary<{from:string; many?:boolean}>
     }
 
+    interface IndexEntry {
+        Table: string;
+        Non_unique: boolean;
+        Key_name: string;
+        Seq_in_index: number;
+        Column_name: string;
+        Collation: string;
+        Cardinality: number;
+        Sub_part: string;
+        Packed: boolean;
+        Index_type: string;
+        Comment: string;
+        Index_comment: string;
+    }
+
 
     export interface QueryLike {
         query:string;
@@ -116,7 +131,8 @@ declare module anydbSQL {
                         on:(eventName:string, handler:Function)=>void}
         columns:Column<any>[]
         sql: SQL;
-        alter():AlterQuery<T>
+        alter():AlterQuery<T>;
+        indexes(): IndexQuery;
         _name: string;
     }
     export interface AlterQuery<T> extends Executable<void> {
@@ -127,6 +143,20 @@ declare module anydbSQL {
         renameColumn(column: Column<any>, newName: string):AlterQuery<T>;
         renameColumn(name: string, newName: string):AlterQuery<T>;
         rename(newName: string): AlterQuery<T>
+    }
+    export interface IndexQuery extends Executable<IndexEntry> {
+        create(): IndexCreationQuery;
+        create(indexName: string): IndexCreationQuery;
+        drop(indexName: string): Executable<void>;
+        drop(...columns: Column<any>[]): Executable<void>
+    }
+    export interface IndexCreationQuery extends Executable<void> {
+        unique(): IndexCreationQuery;
+        using(name: string): IndexCreationQuery;
+        on(...columns: (Column<any>|OrderByValueNode)[]): IndexCreationQuery;
+        withParser(parserName: string): IndexCreationQuery;
+        fulltext(): IndexCreationQuery;
+        spatial(): IndexCreationQuery;
     }
 
     export interface SQL {
