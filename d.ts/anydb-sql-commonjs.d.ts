@@ -188,6 +188,8 @@ declare module anydbSQL {
         isNull():BinaryNode
         isNotNull():BinaryNode
         sum():Column<number>
+        max(name?: string): Column<T>;
+        min(name?: string): Column<T>;
         count():Column<number>
         count(name:string):Column<number>
         distinct():Column<T>
