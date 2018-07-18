@@ -61,11 +61,15 @@ declare module "anydb-sql" {
             where(...nodes:any[]):SubQuery<T>
             from(table:TableNode):SubQuery<T>
             from(statement:string):SubQuery<T>
-            group(...nodes:any[]):SubQuery<T>
+            group(...nodes:any[]):GroupSubQuery<T>
             order(criteria:OrderByValueNode):SubQuery<T>
             exists():BinaryNode
             notExists(): BinaryNode;
             notExists(subQuery:SubQuery<any>):BinaryNode
+        }
+
+        export interface GroupSubQuery<T> extends SubQuery<T> {
+            having(...nodes:any[]): SubQuery<T>;
         }
 
         interface Executable<T> {
@@ -90,10 +94,14 @@ declare module "anydb-sql" {
             from(statement:string):Query<T>
             update(o:Dictionary<any>):ModifyingQuery
             update(o:{}):ModifyingQuery
-            group(...nodes:any[]):Query<T>
+            group(...nodes:any[]):GroupQuery<T>
             order(...criteria:OrderByValueNode[]):Query<T>
             limit(l:number):Query<T>
             offset(o:number):Query<T>
+        }
+
+        export interface GroupQuery<T> extends Query<T> {
+            having(...nodes:any[]): Query<T>;
         }
 
         export interface ModifyingQuery extends Executable<void> {

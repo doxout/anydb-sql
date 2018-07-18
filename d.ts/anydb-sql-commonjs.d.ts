@@ -57,11 +57,15 @@ declare module anydbSQL {
         commitAsync():Promise<void>
     }
 
+    type Group<T> = T & {
+        having(...nodes:any[]): T;
+    }
+
     export interface SubQuery<T> {
         select(node:Column<T>):SubQuery<T>
         where(...nodes:any[]):SubQuery<T>
         from(table:TableNode):SubQuery<T>
-        group(...nodes:any[]):SubQuery<T>
+        group(...nodes:any[]):Group<SubQuery<T>>
         order(criteria:OrderByValueNode):SubQuery<T>
         exists():BinaryNode
         notExists(subQuery:SubQuery<any>):BinaryNode
@@ -88,7 +92,7 @@ declare module anydbSQL {
         from(table:TableNode):Query<T>
         update(o:Dictionary<any>):ModifyingQuery
         update(o:{}):ModifyingQuery
-        group(...nodes:any[]):Query<T>
+        group(...nodes:any[]):Group<Query<T>>
         order(...criteria:OrderByValueNode[]):Query<T>
         limit(l:number):Query<T>
         offset(o:number):Query<T>
