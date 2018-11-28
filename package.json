@@ -1,6 +1,6 @@
 {
   "name": "anydb-sql",
-  "version": "0.6.57",
+  "version": "0.7.0",
   "description": "Minimal ORM for mysql, postgresql and sqlite with complete arbitrary SQL query support (based on brianc's query builder sql)",
   "main": "anydb-sql.js",
   "scripts": {
@@ -38,7 +38,7 @@
     "any-db-transaction": "^2.2.1",
     "bluebird": "^2.3.6",
     "sql": "^0.45.3",
-    "sqlite3": "3.x"
+    "sqlite3": "^4.0.4"
   },
   "devDependencies": {
     "blue-tape": "^0.1.7"
