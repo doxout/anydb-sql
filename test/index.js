@@ -72,10 +72,10 @@ test('anydb-sql', function(t) {
                 return user.where({id: 2}).getWithin(tx)
             }).then(function(res) {
                 t.ok(res, 'getWithin transaction should work');
-                t.end();
+                // t.end();
                 return true;
             });
-        }).done(null, function(e) {
+        }).done(() => t.end(), function(e) {
             console.error(e.stack);
             t.notOk(e, 'db.transaction should not throw');
             t.end();
