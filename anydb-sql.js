@@ -1,4 +1,4 @@
-var sql = require('sql');
+var sql = require('node-sql-2');
 var url = require('url');
 var EventEmitter = require('events').EventEmitter;
 var P = require('bluebird');
