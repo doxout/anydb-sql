@@ -25,6 +25,7 @@
     "mysql",
     "sqlite"
   ],
+  "typings": { "./d.ts/anydb-sql.d.ts" },
   "bugs": {
     "url": "https://github.com/doxout/anydb-sql/issues"
   },
